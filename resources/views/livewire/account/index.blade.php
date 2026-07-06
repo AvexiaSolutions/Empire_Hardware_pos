@@ -203,10 +203,10 @@
                         <table class="table table-sm table-borderless text-start align-middle mb-0 text-body">
                             <thead class="sticky-top bg-body">
                                 <tr>
-                                    <th class="py-2 px-3 fw-bold" style="background-color: #dbeafe;">Invoice No</th>
-                                    <th class="py-2 px-3 fw-bold" style="background-color: #dbeafe;">Date</th>
-                                    <th class="py-2 px-3 fw-bold" style="background-color: #dbeafe;">Customer</th>
-                                    <th class="py-2 px-3 fw-bold" style="background-color: #dbeafe;">Total(Rs.)</th>
+                                    <th class="py-2 px-3 fw-bold bg-body-secondary">Invoice No</th>
+                                    <th class="py-2 px-3 fw-bold bg-body-secondary">Date</th>
+                                    <th class="py-2 px-3 fw-bold bg-body-secondary">Customer</th>
+                                    <th class="py-2 px-3 fw-bold bg-body-secondary">Total(Rs.)</th>
                                 </tr>
                             </thead>
                             <tbody class="fw-semibold text-body">
@@ -261,10 +261,10 @@
                         <table class="table table-sm table-borderless text-start align-middle mb-0 text-body">
                             <thead class="sticky-top bg-body">
                                 <tr>
-                                    <th class="py-2 px-3 fw-bold" style="background-color: #fca5a5;">Type</th>
-                                    <th class="py-2 px-3 fw-bold" style="background-color: #fca5a5;">Description/Name</th>
-                                    <th class="py-2 px-3 fw-bold" style="background-color: #fca5a5;">Date</th>
-                                    <th class="py-2 px-3 fw-bold text-end" style="background-color: #fca5a5;">Amount(Rs.)</th>
+                                    <th class="py-2 px-3 fw-bold bg-body-secondary">Type</th>
+                                    <th class="py-2 px-3 fw-bold bg-body-secondary">Description/Name</th>
+                                    <th class="py-2 px-3 fw-bold bg-body-secondary">Date</th>
+                                    <th class="py-2 px-3 fw-bold text-end bg-body-secondary">Amount(Rs.)</th>
                                 </tr>
                             </thead>
                             <tbody class="fw-semibold text-body">
@@ -332,8 +332,8 @@
                         <table class="table table-sm table-borderless text-start mb-0 text-body">
                             <thead>
                                 <tr>
-                                    <th class="py-3 px-4 fw-bold" style="background-color: #dbeafe;">Description</th>
-                                    <th class="py-3 px-4 fw-bold text-end" style="background-color: #dbeafe;">Amount(Rs.)</th>
+                                    <th class="py-3 px-4 fw-bold bg-body-secondary">Description</th>
+                                    <th class="py-3 px-4 fw-bold text-end bg-body-secondary">Amount(Rs.)</th>
                                 </tr>
                             </thead>
                             <tbody class="fw-semibold text-body">
