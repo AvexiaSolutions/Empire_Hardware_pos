@@ -154,9 +154,9 @@
                 <div class="modal-body p-3">
                     <div class="card border-0 rounded-4 shadow-sm text-white position-relative overflow-hidden mb-4" style="background: linear-gradient(135deg, #4ade80, #22c55e);">
                         <div class="card-body p-3 position-relative z-1 d-flex flex-column h-100">
-                            <div class="d-flex align-items-baseline gap-2 mb-4">
-                                <h2 class="fs-3 fw-bolder mb-0 lh-1">{{ $currentMonth->format('F') }}</h2>
-                                <span class="fs-4 fw-semibold">Of {{ $currentMonth->format('Y') }}</span>
+                            <div class="d-flex flex-column gap-1 mb-4">
+                                <span class="fs-6 fw-semibold text-white-50">Selected Period</span>
+                                <h2 class="fs-4 fw-bolder mb-0 lh-1">{{ \Carbon\Carbon::parse($startDate)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}</h2>
                             </div>
                             <div class="mt-2">
                                 <div class="fw-bold mb-1" style="opacity: 0.9;">Total Income</div>
@@ -212,9 +212,9 @@
                 <div class="modal-body p-3">
                     <div class="card border-0 rounded-4 shadow-sm text-white position-relative overflow-hidden mb-4" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
                         <div class="card-body p-3 position-relative z-1 d-flex flex-column h-100">
-                            <div class="d-flex align-items-baseline gap-2 mb-4">
-                                <h2 class="fs-3 fw-bolder mb-0 lh-1">{{ $currentMonth->format('F') }}</h2>
-                                <span class="fs-4 fw-semibold">Of {{ $currentMonth->format('Y') }}</span>
+                            <div class="d-flex flex-column gap-1 mb-4">
+                                <span class="fs-6 fw-semibold text-white-50">Selected Period</span>
+                                <h2 class="fs-4 fw-bolder mb-0 lh-1">{{ \Carbon\Carbon::parse($startDate)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}</h2>
                             </div>
                             <div class="mt-2">
                                 <div class="fw-bold mb-1" style="opacity: 0.9;">Total Expenses</div>
@@ -283,9 +283,9 @@
                     @endphp
                     <div class="card border-0 rounded-4 shadow-sm text-white position-relative overflow-hidden mb-4" style="background: {{ $gradient }};">
                         <div class="card-body p-3 position-relative z-1 d-flex flex-column h-100">
-                            <div class="d-flex align-items-baseline gap-2 mb-4">
-                                <h2 class="fs-3 fw-bolder mb-0 lh-1">{{ $currentMonth->format('F') }}</h2>
-                                <span class="fs-5 fw-semibold">Of {{ $currentMonth->format('Y') }}</span>
+                            <div class="d-flex flex-column gap-1 mb-4">
+                                <span class="fs-6 fw-semibold text-white-50">Selected Period</span>
+                                <h2 class="fs-4 fw-bolder mb-0 lh-1">{{ \Carbon\Carbon::parse($startDate)->format('M d, Y') }} - {{ \Carbon\Carbon::parse($endDate)->format('M d, Y') }}</h2>
                             </div>
                             <div class="mt-2">
                                 <div class="fw-bold mb-1" style="opacity: 0.9;">{{ $isLoss ? 'Net Loss' : 'Net Profit' }}</div>
