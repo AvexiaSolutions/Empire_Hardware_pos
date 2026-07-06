@@ -90,12 +90,18 @@
         @endif
 
         <!-- All Invoices Section -->
-        <div class="d-flex justify-content-between align-items-end mb-3 mt-4">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-end mb-3 mt-4 gap-3">
             <h5 class="fw-bold text-body mb-0">{{ __('All Invoices History') }}</h5>
-            <div class="d-flex gap-2">
-                <button class="btn btn-body border shadow-sm fw-bold d-flex align-items-center gap-2 px-3">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M3.5 2.5a.5.5 0 0 0-1 0v8.793l-1.146-1.147a.5.5 0 0 0-.708.708l2 1.999.007.007a.497.497 0 0 0 .7-.006l2-2a.5.5 0 0 0-.707-.708L3.5 11.293V2.5zm3.5 1a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zM7.5 6a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5zm0 4a.5.5 0 0 0 0 1h3a.5.5 0 0 0 0-1h-3z"/></svg> {{ __('Sort') }}
-                </button>
+            <div class="d-flex align-items-center gap-2">
+                <label for="dateFilter" class="form-label mb-0 fw-semibold text-muted small text-nowrap">{{ __('Filter by Date:') }}</label>
+                <div class="position-relative">
+                    <input type="date" id="dateFilter" wire:model.live="dateFilter" class="form-control form-control-sm border shadow-sm" style="cursor: pointer; padding-right: 30px;">
+                    @if($dateFilter)
+                        <button wire:click="$set('dateFilter', null)" class="btn btn-link text-danger p-0 position-absolute end-0 top-50 translate-middle-y me-2 text-decoration-none" title="{{ __('Clear Filter') }}">
+                            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/></svg>
+                        </button>
+                    @endif
+                </div>
             </div>
         </div>
 

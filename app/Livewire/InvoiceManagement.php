@@ -7,17 +7,25 @@ use App\Models\Invoice;
 
 class InvoiceManagement extends Component
 {
+    public $dateFilter;
+
     public function render()
     {
-        $invoices = Invoice::orderBy('created_at', 'desc')->get();
+        $query = Invoice::query();
+        $debtorQuery = Invoice::where('balance_amount', '<', 0);
+
+        if ($this->dateFilter) {
+            $query->whereDate('created_at', $this->dateFilter);
+            $debtorQuery->whereDate('created_at', $this->dateFilter);
+        }
+
+        $invoices = (clone $query)->orderBy('created_at', 'desc')->get();
         
-        $totalSales = Invoice::sum('total');
-        $totalInvoicesCount = Invoice::count();
+        $totalSales = (clone $query)->sum('total');
+        $totalInvoicesCount = (clone $query)->count();
 
         // Debtors are customers who owe us (negative balance in pos context means tendered < total)
-        // Wait, looking at POS index: balance = tenderedAmount - grandTotal
-        // So if tendered < total, balance is negative.
-        $debtors = Invoice::where('balance_amount', '<', 0)->get();
+        $debtors = $debtorQuery->get();
         
         $totalDebtorsCount = $debtors->count();
         // The owed amount is the absolute value of the negative balance
