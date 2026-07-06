@@ -130,12 +130,12 @@
             <!-- Header (Desktop) -->
             <div class="d-none d-lg-flex justify-content-between align-items-center mb-3">
                 <h3 class="fs-4 fw-bold text-body mb-0">{{ __('Current Order') }}</h3>
-                <button wire:click="$set('cart', [])" class="btn btn-sm btn-outline-danger shadow-sm hover-lift" title="Shortcut: F4">{{ __('Clear Cart [F4]') }}</button>
+                <button wire:click="clearCart" class="btn btn-sm btn-outline-danger shadow-sm hover-lift" title="Shortcut: F4">{{ __('Clear Cart [F4]') }}</button>
             </div>
             
             <!-- Mobile clear cart button -->
-            <div class="d-lg-none d-flex justify-content-end mb-2">
-                <button wire:click="$set('cart', [])" class="btn btn-sm btn-outline-danger shadow-sm">{{ __('Clear Cart') }}</button>
+            <div class="d-lg-none position-fixed bottom-0 start-50 translate-middle-x mb-3 z-3 w-100 px-3 pb-2" style="max-width: 400px;">
+                <button wire:click="clearCart" class="btn btn-sm btn-outline-danger shadow-sm">{{ __('Clear Cart') }}</button>
             </div>
 
         @if(session()->has('error'))
@@ -330,7 +330,7 @@
         if (e.key === 'F4') {
             e.preventDefault();
             if(confirm("Are you sure you want to clear the cart?")) {
-                @this.set('cart', []);
+                @this.call('clearCart');
             }
         }
     });

@@ -154,6 +154,15 @@ class Index extends Component
         $this->calculateTotals();
     }
 
+    public function clearCart()
+    {
+        $this->cart = [];
+        $this->customerName = '';
+        $this->billDiscount = 0;
+        $this->tenderedAmount = 0;
+        $this->calculateTotals();
+    }
+
     public function updatedBillDiscount() { $this->calculateTotals(); }
     public function updatedBillDiscountType() { $this->calculateTotals(); }
     public function updatedTenderedAmount() { $this->calculateTotals(); }
