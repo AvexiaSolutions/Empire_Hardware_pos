@@ -10,6 +10,7 @@ use App\Models\Paysheet;
 use App\Models\Cheque;
 use App\Models\Credit;
 use App\Models\ItemBatch;
+use App\Models\ReturnLog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -38,6 +39,27 @@ class ReportController extends Controller
                                        
         $monthlyExpenses = $expensesList->sum('amount') + $paysheetsList->sum('net_salary');
         
+        $returnLogs = ReturnLog::with(['invoiceItem', 'itemBatch'])
+            ->whereBetween('date', [$start->format('Y-m-d'), $end->format('Y-m-d')])
+            ->get();
+
+        $returnDeductions = 0;
+        $damageExpenses = 0;
+
+        foreach ($returnLogs as $log) {
+            if ($log->type === 'change' || $log->type === 'damage') {
+                $refundAmount = $log->quantity * ($log->invoiceItem->unit_price ?? 0);
+                $returnDeductions += $refundAmount;
+            }
+            if ($log->type === 'damage') {
+                $costPrice = $log->itemBatch ? $log->itemBatch->getRawOriginal('cost_price') : 0;
+                $damageExpenses += ($log->quantity * $costPrice);
+            }
+        }
+
+        $monthlyIncome -= $returnDeductions;
+        $monthlyExpenses += $damageExpenses;
+
         $net = $monthlyIncome - $monthlyExpenses;
         $companyProfit = $net >= 0 ? $net : 0;
         $companyLoss = $net < 0 ? abs($net) : 0;
@@ -45,7 +67,7 @@ class ReportController extends Controller
         $pdf = Pdf::loadView('reports.pnl', compact(
             'startStr', 'endStr', 'invoices', 'monthlyIncome', 
             'expensesList', 'paysheetsList', 'monthlyExpenses', 
-            'companyProfit', 'companyLoss'
+            'companyProfit', 'companyLoss', 'returnDeductions', 'damageExpenses'
         ));
 
         return $pdf->stream('pnl-report-'.$startStr.'-to-'.$endStr.'.pdf');

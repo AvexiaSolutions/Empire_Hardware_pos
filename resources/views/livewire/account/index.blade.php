@@ -131,6 +131,48 @@
             </div>
         </div>
 
+        <!-- Third Row: Warranty Claims -->
+        @if(count($warrantyClaims) > 0)
+        <h3 class="fs-5 fw-bold text-warning mt-2 mb-2">Pending Warranty Claims</h3>
+        <div class="card border-0 rounded-4 shadow-sm bg-body mb-4 p-4">
+            <div class="table-responsive">
+                <table class="table table-sm table-borderless text-start align-middle mb-0 text-body">
+                    <thead class="border-bottom">
+                        <tr>
+                            <th class="py-2 px-3 fw-bold text-muted">Date</th>
+                            <th class="py-2 px-3 fw-bold text-muted">Item</th>
+                            <th class="py-2 px-3 fw-bold text-muted">Invoice No</th>
+                            <th class="py-2 px-3 fw-bold text-muted text-center">Qty</th>
+                            <th class="py-2 px-3 fw-bold text-muted">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="fw-semibold text-body">
+                        @foreach($warrantyClaims as $claim)
+                        <tr>
+                            <td class="py-3 px-3">{{ \Carbon\Carbon::parse($claim->date)->format('Y-m-d') }}</td>
+                            <td class="py-3 px-3">{{ $claim->item->item_name ?? 'Unknown Item' }}</td>
+                            <td class="py-3 px-3">{{ $claim->invoice->invoice_no ?? 'N/A' }}</td>
+                            <td class="py-3 px-3 text-center">
+                                <span class="badge bg-light text-dark border">{{ $claim->quantity }}</span>
+                            </td>
+                            <td class="py-3 px-3">
+                                <span class="badge bg-warning text-dark">Pending Claim</span>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-muted small mt-2">
+                <i class="bi bi-info-circle"></i> These items have been claimed for warranty and need to be sent back to the respective company. They do not affect the Profit & Loss report.
+            </div>
+        </div>
+        @endif
+
+        <div class="mt-3">
+            <button data-bs-toggle="modal" data-bs-target="#profitLossModal" class="btn btn-primary-custom fw-bold py-3 px-4 rounded-3 shadow-sm fs-5 border-0">See Profit & Loss Report</button>
+        </div>
+
     </div>
 
     <!-- Modals -->
@@ -299,8 +341,16 @@
                                     <td colspan="2" class="py-3 px-4 fw-bold text-body">Revenue</td>
                                 </tr>
                                 <tr>
-                                    <td class="py-2 px-4 ps-4">Invoices Total</td>
-                                    <td class="py-2 px-4 text-end">{{ number_format($monthlyIncome, 2) }}</td>
+                                    <td class="py-2 px-4 ps-4">Invoices Total (Gross)</td>
+                                    <td class="py-2 px-4 text-end">{{ number_format($monthlyIncome + $returnDeductions, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-4 ps-4 text-danger">Less: Returns/Damages (Refunds)</td>
+                                    <td class="py-2 px-4 text-end text-danger">-{{ number_format($returnDeductions, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-4 ps-4 fw-bold">Net Revenue</td>
+                                    <td class="py-2 px-4 text-end fw-bold">{{ number_format($monthlyIncome, 2) }}</td>
                                 </tr>
                                 
                                 <tr>
@@ -313,6 +363,14 @@
                                 <tr>
                                     <td class="py-2 px-4 ps-4">Employee Salaries</td>
                                     <td class="py-2 px-4 text-end">{{ number_format($paysheetsList->sum('net_salary'), 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-4 ps-4 text-warning" style="color: #d97706 !important;">Damage Item Cost Loss</td>
+                                    <td class="py-2 px-4 text-end text-warning" style="color: #d97706 !important;">{{ number_format($damageExpenses, 2) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2 px-4 ps-4 fw-bold">Total Expenses</td>
+                                    <td class="py-2 px-4 text-end fw-bold">{{ number_format($monthlyExpenses, 2) }}</td>
                                 </tr>
                             </tbody>
                         </table>

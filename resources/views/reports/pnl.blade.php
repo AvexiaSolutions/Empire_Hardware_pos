@@ -30,13 +30,42 @@
     <div class="summary-box">
         <table style="border: none; margin-bottom: 0;">
             <tr style="border: none;">
-                <td style="border: none; padding: 5px 0;">Total Revenue (Income):</td>
-                <td style="border: none; padding: 5px 0;" class="text-right">Rs. {{ number_format($monthlyIncome, 2) }}</td>
+                <td style="border: none; padding: 5px 0;">Gross Revenue (Invoices Total):</td>
+                <td style="border: none; padding: 5px 0;" class="text-right">Rs. {{ number_format($monthlyIncome + $returnDeductions, 2) }}</td>
+            </tr>
+            @if($returnDeductions > 0)
+            <tr style="border: none;">
+                <td style="border: none; padding: 5px 0; color: #dc2626;">Less: Returns/Damages (Refunds):</td>
+                <td style="border: none; padding: 5px 0; color: #dc2626;" class="text-right">-Rs. {{ number_format($returnDeductions, 2) }}</td>
+            </tr>
+            @endif
+            <tr style="border: none;">
+                <td style="border: none; padding: 5px 0; font-weight: bold;">Net Revenue:</td>
+                <td style="border: none; padding: 5px 0; font-weight: bold;" class="text-right">Rs. {{ number_format($monthlyIncome, 2) }}</td>
+            </tr>
+
+            <tr style="border: none;">
+                <td colspan="2" style="border: none; padding: 15px 0 5px 0; border-top: 1px solid #cbd5e1; font-weight: bold;">Expenses</td>
             </tr>
             <tr style="border: none;">
-                <td style="border: none; padding: 5px 0;">Total Expenses:</td>
-                <td style="border: none; padding: 5px 0;" class="text-right">Rs. {{ number_format($monthlyExpenses, 2) }}</td>
+                <td style="border: none; padding: 5px 0; padding-left: 15px;">General Expenses:</td>
+                <td style="border: none; padding: 5px 0;" class="text-right">Rs. {{ number_format($expensesList->sum('amount'), 2) }}</td>
             </tr>
+            <tr style="border: none;">
+                <td style="border: none; padding: 5px 0; padding-left: 15px;">Salaries:</td>
+                <td style="border: none; padding: 5px 0;" class="text-right">Rs. {{ number_format($paysheetsList->sum('net_salary'), 2) }}</td>
+            </tr>
+            @if($damageExpenses > 0)
+            <tr style="border: none;">
+                <td style="border: none; padding: 5px 0; padding-left: 15px; color: #d97706;">Damage Item Cost Loss:</td>
+                <td style="border: none; padding: 5px 0; color: #d97706;" class="text-right">Rs. {{ number_format($damageExpenses, 2) }}</td>
+            </tr>
+            @endif
+            <tr style="border: none;">
+                <td style="border: none; padding: 5px 0; font-weight: bold;">Total Expenses:</td>
+                <td style="border: none; padding: 5px 0; font-weight: bold;" class="text-right">Rs. {{ number_format($monthlyExpenses, 2) }}</td>
+            </tr>
+
             <tr style="border: none;">
                 <td style="border: none; padding: 15px 0 5px 0; font-weight: bold; font-size: 18px; border-top: 2px solid #cbd5e1;">Net {{ $companyLoss > 0 ? 'Loss' : 'Profit' }}:</td>
                 <td style="border: none; padding: 15px 0 5px 0; font-weight: bold; font-size: 18px; border-top: 2px solid #cbd5e1;" class="text-right {{ $companyLoss > 0 ? 'loss' : 'profit' }}">

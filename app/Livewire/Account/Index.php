@@ -10,6 +10,7 @@ use App\Models\Paysheet;
 use App\Models\Cheque;
 use App\Models\Credit;
 use App\Models\ItemBatch;
+use App\Models\ReturnLog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -31,10 +32,15 @@ class Index extends Component
     public $totalStockValue = 0;
     public $expectedProfit = 0;
 
+    // Return & Damage Impact
+    public $returnDeductions = 0;
+    public $damageExpenses = 0;
+
     // Data for modals
     public $invoices = [];
     public $expensesList = [];
     public $paysheetsList = [];
+    public $warrantyClaims = [];
 
     public function mount()
     {
@@ -100,9 +106,36 @@ class Index extends Component
                                 ->whereBetween('due_date', [$start->format('Y-m-d'), $end->format('Y-m-d')])
                                 ->sum('amount');
                                 
-        $this->monthlyPendingIncome = $pendingCheques + $pendingCredits;
+        // 4. Returns & Damages
+        $returnLogs = ReturnLog::with(['invoiceItem', 'itemBatch', 'item'])
+            ->whereBetween('date', [$start->format('Y-m-d'), $end->format('Y-m-d')])
+            ->get();
 
-        // 4. Profit & Loss
+        $this->returnDeductions = 0;
+        $this->damageExpenses = 0;
+        
+        // Filter warranty claims to show in UI
+        $this->warrantyClaims = $returnLogs->where('type', 'warranty_claim')->values();
+
+        foreach ($returnLogs as $log) {
+            // Deduct refunds from income for both 'change' and 'damage'
+            if ($log->type === 'change' || $log->type === 'damage') {
+                $refundAmount = $log->quantity * ($log->invoiceItem->unit_price ?? 0);
+                $this->returnDeductions += $refundAmount;
+            }
+            
+            // Add cost price of damaged items to expenses
+            if ($log->type === 'damage') {
+                $costPrice = $log->itemBatch ? $log->itemBatch->getRawOriginal('cost_price') : 0;
+                $this->damageExpenses += ($log->quantity * $costPrice);
+            }
+        }
+
+        // Adjust final income and expenses
+        $this->monthlyIncome -= $this->returnDeductions;
+        $this->monthlyExpenses += $this->damageExpenses;
+
+        // 5. Profit & Loss
         $net = $this->monthlyIncome - $this->monthlyExpenses;
         if ($net >= 0) {
             $this->companyProfit = $net;
@@ -112,7 +145,7 @@ class Index extends Component
             $this->companyLoss = abs($net);
         }
 
-        // 5. Stock Valuation (Current Active Stock)
+        // 6. Stock Valuation (Current Active Stock)
         $stockData = ItemBatch::where('is_active', true)
             ->where('quantity', '>', 0)
             ->select(
