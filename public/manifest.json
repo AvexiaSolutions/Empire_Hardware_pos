@@ -1,0 +1,20 @@
+{
+    "name": "Avexia POS System",
+    "short_name": "AvexiaPOS",
+    "start_url": "/dashboard",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#0D8ABC",
+    "icons": [
+        {
+            "src": "/storage/logos/NI07HMe3Xh0bmsgf9GglALOsUCstnZc5LZwci2mM.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/storage/logos/NI07HMe3Xh0bmsgf9GglALOsUCstnZc5LZwci2mM.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}

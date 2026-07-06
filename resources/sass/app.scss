@@ -1,0 +1,63 @@
+$color-mode-type: media; // Automatically uses OS preference for light/dark mode
+
+@import 'bootstrap/scss/bootstrap';
+
+// Custom POS specific styles
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+// Bootstrap overrides for specific colors requested in design
+.bg-primary-custom {
+    background-color: #007CEF !important;
+    color: white;
+}
+.text-primary-custom {
+    color: #007CEF !important;
+}
+.btn-primary-custom {
+    background-color: #007CEF;
+    color: white;
+    border: none;
+}
+.btn-primary-custom:hover {
+    background-color: #005DB3;
+    color: white;
+}
+.btn-outline-primary-custom {
+    border: 2px solid #007CEF;
+    color: #007CEF;
+    background-color: transparent;
+}
+.btn-outline-primary-custom:hover {
+    background-color: #e6f2ff;
+    color: #007CEF;
+}
+
+
+/* Fixes for manual theme toggle (data-bs-theme="dark") */
+[data-bs-theme="dark"] {
+    .form-control, .form-select, input[type="text"], input[type="email"], input[type="password"], input[type="number"], input[type="search"], input[type="tel"], input[type="url"], textarea, select {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+        color: #f8f9fa !important;
+    }
+    .form-control:focus, .form-select:focus, input:focus, textarea:focus, select:focus {
+        background-color: rgba(255, 255, 255, 0.12) !important;
+        border-color: #007CEF !important;
+        color: #f8f9fa !important;
+        box-shadow: 0 0 0 0.25rem rgba(0, 124, 239, 0.25) !important;
+    }
+    .form-select option, select option {
+        background-color: #212529 !important;
+        color: #f8f9fa !important;
+    }
+    .form-control::placeholder, input::placeholder, textarea::placeholder {
+        color: #9ca3af !important;
+    }
+    input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px #1e2125 inset !important;
+        -webkit-text-fill-color: #f8f9fa !important;
+        transition: background-color 5000s ease-in-out 0s;
+    }
+}
