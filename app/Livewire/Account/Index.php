@@ -9,12 +9,15 @@ use App\Models\Expense;
 use App\Models\Paysheet;
 use App\Models\Cheque;
 use App\Models\Credit;
+use App\Models\ItemBatch;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 #[Layout('components.pos-layout')]
 class Index extends Component
 {
-    public $currentMonth;
+    public $startDate;
+    public $endDate;
     
     public $monthlyIncome = 0;
     public $monthlyExpenses = 0;
@@ -23,6 +26,11 @@ class Index extends Component
     public $companyProfit = 0;
     public $companyLoss = 0;
 
+    // Stock details
+    public $totalStockCost = 0;
+    public $totalStockValue = 0;
+    public $expectedProfit = 0;
+
     // Data for modals
     public $invoices = [];
     public $expensesList = [];
@@ -30,43 +38,66 @@ class Index extends Component
 
     public function mount()
     {
-        $this->currentMonth = Carbon::now();
+        $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
+        $this->calculateTotals();
+    }
+
+    public function updatedStartDate() { $this->calculateTotals(); }
+    public function updatedEndDate() { $this->calculateTotals(); }
+
+    public function setToday()
+    {
+        $this->startDate = Carbon::today()->format('Y-m-d');
+        $this->endDate = Carbon::today()->format('Y-m-d');
+        $this->calculateTotals();
+    }
+
+    public function setThisMonth()
+    {
+        $this->startDate = Carbon::now()->startOfMonth()->format('Y-m-d');
+        $this->endDate = Carbon::now()->endOfMonth()->format('Y-m-d');
         $this->calculateTotals();
     }
 
     public function calculateTotals()
     {
-        $startOfMonth = $this->currentMonth->copy()->startOfMonth();
-        $endOfMonth = $this->currentMonth->copy()->endOfMonth();
+        if (!$this->startDate || !$this->endDate) return;
 
-        // 1. Monthly Income (Invoices total)
-        $this->invoices = Invoice::whereBetween('date', [$startOfMonth, $endOfMonth])
-                                 ->orderBy('date', 'desc')
+        $start = Carbon::parse($this->startDate)->startOfDay();
+        $end = Carbon::parse($this->endDate)->endOfDay();
+
+        // 1. Income (Invoices total) within range
+        $this->invoices = Invoice::whereBetween('created_at', [$start, $end])
+                                 ->orderBy('created_at', 'desc')
                                  ->get();
         $this->monthlyIncome = $this->invoices->sum('total');
 
-        // 2. Monthly Expenses (Expenses + Paysheets)
-        $this->expensesList = Expense::whereBetween('date', [$startOfMonth, $endOfMonth])
+        // 2. Expenses (Expenses + Paysheets) within range
+        $this->expensesList = Expense::whereBetween('date', [$start->format('Y-m-d'), $end->format('Y-m-d')])
                                      ->orderBy('date', 'desc')
                                      ->get();
                                      
-        // Paysheets use string 'month_year' like 'YYYY-MM'
-        $monthYearStr = $this->currentMonth->format('Y-m'); 
-        $this->paysheetsList = Paysheet::with('employee') // Ensure relation is defined in model or it will fail
-                                       ->where('month_year', $monthYearStr)
+        // Paysheets check if the paysheet's month_year overlaps with the date range
+        // Since paysheets are stored as 'Y-m', we'll grab paysheets for the months that fall in the range
+        $startMonthStr = $start->format('Y-m'); 
+        $endMonthStr = $end->format('Y-m');
+
+        $this->paysheetsList = Paysheet::with('employee')
+                                       ->whereBetween('month_year', [$startMonthStr, $endMonthStr])
                                        ->get();
                                        
         $this->monthlyExpenses = $this->expensesList->sum('amount') + $this->paysheetsList->sum('net_salary');
 
-        // 3. Monthly Pending Income (Received Cheques + Received Credits that are Pending)
+        // 3. Pending Income (Received Cheques + Received Credits that are Pending) due within range
         $pendingCheques = Cheque::where('type', 'received')
                                 ->where('status', 'Pending')
-                                ->whereBetween('due_date', [$startOfMonth, $endOfMonth])
+                                ->whereBetween('due_date', [$start->format('Y-m-d'), $end->format('Y-m-d')])
                                 ->sum('amount');
                                 
         $pendingCredits = Credit::where('type', 'received')
                                 ->where('status', 'Pending')
-                                ->whereBetween('due_date', [$startOfMonth, $endOfMonth])
+                                ->whereBetween('due_date', [$start->format('Y-m-d'), $end->format('Y-m-d')])
                                 ->sum('amount');
                                 
         $this->monthlyPendingIncome = $pendingCheques + $pendingCredits;
@@ -80,6 +111,18 @@ class Index extends Component
             $this->companyProfit = 0;
             $this->companyLoss = abs($net);
         }
+
+        // 5. Stock Valuation (Current Active Stock)
+        $stockData = ItemBatch::where('is_active', true)
+            ->where('quantity', '>', 0)
+            ->select(
+                DB::raw('SUM(quantity * cost_price) as total_cost'),
+                DB::raw('SUM(quantity * selling_price) as total_value')
+            )->first();
+
+        $this->totalStockCost = $stockData->total_cost ?? 0;
+        $this->totalStockValue = $stockData->total_value ?? 0;
+        $this->expectedProfit = $this->totalStockValue - $this->totalStockCost;
     }
 
     public function render()

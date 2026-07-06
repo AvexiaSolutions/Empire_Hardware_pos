@@ -44,6 +44,10 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('account', \App\Livewire\Account\Index::class)->name('account');
     Route::get('expenses', \App\Livewire\ExpenseManagement::class)->name('expenses.index');
 
+    // Reports
+    Route::get('reports/pnl', [\App\Http\Controllers\ReportController::class, 'pnlReport'])->name('report.pnl');
+    Route::get('reports/stock', [\App\Http\Controllers\ReportController::class, 'stockReport'])->name('report.stock');
+
     // Supplier Routes
     Route::get('supplier', \App\Livewire\SupplierManagement::class)->name('supplier.index');
 

@@ -2,14 +2,58 @@
     <div class="d-flex flex-column gap-4 pb-5">
         
         <!-- Header area for the section -->
-        <div>
-            <h2 class="fs-4 fw-bold text-body mb-4">Account</h2>
-            <h3 class="fs-4 fw-bold text-body">Current Month ({{ $currentMonth->format('F Y') }})</h3>
+        <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-end mb-4 gap-3">
+            <div>
+                <h2 class="fs-4 fw-bold text-body mb-1">Account & Reports</h2>
+                <h3 class="fs-6 fw-bold text-muted mb-0">Reporting Period</h3>
+            </div>
+            
+            <!-- Date Filters -->
+            <div class="d-flex flex-wrap gap-2 align-items-end bg-white p-3 rounded-4 shadow-sm border">
+                <div>
+                    <label class="form-label mb-1 text-muted small fw-semibold">From Date</label>
+                    <input type="date" wire:model.live="startDate" class="form-control form-control-sm border shadow-sm">
+                </div>
+                <div>
+                    <label class="form-label mb-1 text-muted small fw-semibold">To Date</label>
+                    <input type="date" wire:model.live="endDate" class="form-control form-control-sm border shadow-sm">
+                </div>
+                <div class="d-flex gap-2 ms-md-2 mt-2 mt-md-0">
+                    <button wire:click="setToday" class="btn btn-sm btn-outline-primary fw-semibold shadow-sm">Today</button>
+                    <button wire:click="setThisMonth" class="btn btn-sm btn-outline-primary fw-semibold shadow-sm">This Month</button>
+                </div>
+                <div class="d-flex gap-2 ms-auto mt-2 mt-md-0">
+                    <a href="{{ route('report.pnl', ['start' => $startDate, 'end' => $endDate]) }}" target="_blank" class="btn btn-sm btn-danger shadow-sm fw-bold d-flex align-items-center gap-1">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/><path d="M4.603 14.087a.81.81 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.68 7.68 0 0 1 1.482-.645 19.697 19.697 0 0 0 1.062-2.227 7.269 7.269 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a10.954 10.954 0 0 0 .98 1.686 5.753 5.753 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.856.856 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.712 5.712 0 0 1-.911-.95 11.651 11.651 0 0 0-1.997.406 11.307 11.307 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.793.793 0 0 1-.58.029zm1.379-1.901c-.166.076-.32.156-.459.238-.328.194-.541.383-.647.547-.094.145-.096.25-.04.361.01.022.02.036.026.044a.266.266 0 0 0 .035-.012c.137-.056.355-.235.635-.572a8.18 8.18 0 0 0 .45-.606zm1.64-1.33a12.71 12.71 0 0 1 1.01-.193 11.744 11.744 0 0 1-.51-.858 20.801 20.801 0 0 1-.5 1.05zm2.446.45c.15.163.296.3.435.41.24.19.407.253.498.256a.107.107 0 0 0 .07-.015.307.307 0 0 0 .094-.125.436.436 0 0 0 .059-.2.095.095 0 0 0-.026-.063c-.052-.062-.2-.152-.518-.209a3.876 3.876 0 0 0-.612-.053zM8.078 7.8a6.7 6.7 0 0 0 .2-.828c.031-.188.043-.343.038-.465a.613.613 0 0 0-.032-.198.517.517 0 0 0-.145.04c-.087.035-.158.106-.196.283-.04.192-.03.469.046.822.024.111.054.227.09.346z"/></svg>
+                        P&L PDF
+                    </a>
+                </div>
+            </div>
         </div>
 
         <!-- Top Row: Income, Expenses, Pending -->
         <div class="row g-4">
             
+            <!-- Profit & Loss Summary -->
+            <div class="col-12 col-md-12 col-xl-4">
+                @php
+                    $isLoss = $companyLoss > 0;
+                    $gradient = $isLoss ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #3b82f6, #2563eb)';
+                @endphp
+                <div class="card border-0 rounded-4 shadow-sm text-white position-relative overflow-hidden h-100" style="background: {{ $gradient }};">
+                    <svg class="position-absolute end-0 top-0 h-100 opacity-25 text-white w-75" viewBox="0 0 200 100" preserveAspectRatio="none" fill="none" stroke="currentColor" stroke-width="4">
+                        <path d="M0,80 C50,80 100,50 150,20 L180,20 M150,20 L130,20 M150,20 L150,40" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <button data-bs-toggle="modal" data-bs-target="#profitLossModal" class="btn text-start w-100 card-body p-3 p-lg-5 d-flex flex-column justify-content-between position-relative z-1 text-white text-decoration-none border-0 shadow-none" style="min-height: 160px; background: transparent;">
+                        <h4 class="fw-bold fs-5 mb-4 text-white">Profit & Loss (Range)</h4>
+                        <div class="d-flex align-items-baseline gap-2">
+                            <div class="fs-3 fw-bolder lh-1 text-white" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));">Rs.{{ number_format(max($companyProfit, $companyLoss), 2) }}</div>
+                            <span class="badge bg-white text-dark">{{ $isLoss ? 'Loss' : 'Profit' }}</span>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
             <!-- Monthly Income -->
             <div class="col-12 col-md-4">
                 <div class="card border-0 rounded-4 shadow-sm text-white position-relative overflow-hidden h-100" style="background: linear-gradient(135deg, #4ade80, #22c55e);">
