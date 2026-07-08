@@ -47,5 +47,10 @@ A Point of Sale (POS) system built with Laravel.
    php artisan serve
    ```
 
+## Default Login Credentials
+After running the migrations and seeders (`php artisan migrate --seed`), you can log in using the following default administrator account:
+- **Email/Username:** `admin@example.com` or `admin`
+- **Password:** `password`
+
 ## License
 Open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

@@ -102,15 +102,7 @@
                 .sidebar-hover-expand { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
             }
         </style>
-        <script>
-            // Check local storage for theme preference before rendering to prevent flashing
-            const storedTheme = localStorage.getItem('theme');
-            if (storedTheme) {
-                document.documentElement.setAttribute('data-bs-theme', storedTheme);
-            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                document.documentElement.setAttribute('data-bs-theme', 'dark');
-            }
-        </script>
+        <x-theme-script />
     </head>
     <body class="d-flex flex-row vh-100 overflow-hidden text-body bg-body">
         
@@ -136,7 +128,7 @@
                 <ul class="nav nav-pills flex-column gap-1">
                     @if(auth()->check() && auth()->user()->role === 'admin')
                 <li class="nav-item">
-                    <a href="{{ route('dashboard') }}" class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('dashboard') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
+                    <a href="{{ route('dashboard') }}" wire:navigate class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('dashboard') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
                         <div style="min-width: 32px; display: flex; justify-content: center;">
                             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                         </div>
@@ -147,15 +139,18 @@
                 
                 @if(auth()->check() && auth()->user()->hasPermission('pos.access'))
                 <li class="nav-item">
-                    <a href="{{ route('pos.index') }}" class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('pos.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
+                    <a href="{{ route('pos.index') }}" wire:navigate class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('pos.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
                         <div style="min-width: 32px; display: flex; justify-content: center;">
                             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                         </div>
                         <span class="nav-text">{{ __('POS') }}</span>
                     </a>
                 </li>
+                @endif
+                
+                @if(auth()->check() && auth()->user()->hasPermission('invoice.access'))
                 <li class="nav-item">
-                    <a href="{{ route('invoice.index') }}" class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('invoice.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
+                    <a href="{{ route('invoice.index') }}" wire:navigate class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('invoice.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
                         <div style="min-width: 32px; display: flex; justify-content: center;">
                             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         </div>
@@ -166,7 +161,7 @@
                 
                 @if(auth()->check() && auth()->user()->hasPermission('returns.access'))
                 <li class="nav-item">
-                    <a href="{{ route('warranty-returns.index') }}" class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('warranty-returns.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
+                    <a href="{{ route('warranty-returns.index') }}" wire:navigate class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('warranty-returns.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
                         <div style="min-width: 32px; display: flex; justify-content: center;">
                             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z"></path></svg>
                         </div>
@@ -177,7 +172,7 @@
                 
                 @if(auth()->check() && auth()->user()->hasPermission('item.access'))
                 <li class="nav-item">
-                    <a href="{{ route('item.index') }}" class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('item.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
+                    <a href="{{ route('item.index') }}" wire:navigate class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('item.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
                         <div style="min-width: 32px; display: flex; justify-content: center;">
                             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
                         </div>
@@ -188,7 +183,7 @@
 
                 @if(auth()->check() && auth()->user()->hasPermission('supplier.access'))
                 <li class="nav-item">
-                    <a href="{{ route('supplier.index') }}" class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('supplier.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
+                    <a href="{{ route('supplier.index') }}" wire:navigate class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('supplier.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
                         <div style="min-width: 32px; display: flex; justify-content: center;">
                             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                         </div>
@@ -199,7 +194,7 @@
                 
                 @if(auth()->check() && auth()->user()->hasPermission('account.access'))
                 <li class="nav-item">
-                    <a href="{{ route('account') }}" class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('account') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
+                    <a href="{{ route('account') }}" wire:navigate class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('account') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
                         <div style="min-width: 32px; display: flex; justify-content: center;">
                             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
@@ -210,7 +205,7 @@
                 
                 @if(auth()->check() && auth()->user()->hasPermission('expenses.access'))
                 <li class="nav-item">
-                    <a href="{{ route('expenses.index') }}" class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('expenses.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
+                    <a href="{{ route('expenses.index') }}" wire:navigate class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('expenses.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
                         <div style="min-width: 32px; display: flex; justify-content: center;">
                             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
@@ -221,7 +216,7 @@
                 
                 @if(auth()->check() && auth()->user()->hasPermission('employer.access'))
                 <li class="nav-item">
-                    <a href="{{ route('employer.index') }}" class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('employer.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
+                    <a href="{{ route('employer.index') }}" wire:navigate class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('employer.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
                         <div style="min-width: 32px; display: flex; justify-content: center;">
                             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                         </div>
@@ -232,7 +227,7 @@
                 
                 @if(auth()->check() && auth()->user()->hasPermission('credit-cheque.access'))
                 <li class="nav-item">
-                    <a href="{{ route('credit-cheque.index') }}" class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('credit-cheque.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
+                    <a href="{{ route('credit-cheque.index') }}" wire:navigate class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('credit-cheque.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
                         <div style="min-width: 32px; display: flex; justify-content: center;">
                             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         </div>
@@ -243,7 +238,7 @@
                 
                 @if(auth()->check() && auth()->user()->role === 'admin')
                 <li class="nav-item">
-                    <a href="{{ route('activity-logs.index') }}" class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('activity-logs.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
+                    <a href="{{ route('activity-logs.index') }}" wire:navigate class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('activity-logs.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
                         <div style="min-width: 32px; display: flex; justify-content: center;">
                             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         </div>
@@ -254,7 +249,7 @@
                 
                 @if(auth()->check() && auth()->user()->hasPermission('settings.access'))
                 <li class="nav-item">
-                    <a href="{{ route('settings.index') }}" class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('settings.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
+                    <a href="{{ route('settings.index') }}" wire:navigate class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('settings.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
                         <div style="min-width: 32px; display: flex; justify-content: center;">
                             <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                         </div>
@@ -303,7 +298,7 @@
                 </div>
                     <div class="d-flex align-items-center gap-3">
                         <!-- Theme Toggle -->
-                        <button id="theme-toggle" class="btn btn-outline-secondary rounded-circle d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
+                        <button id="theme-toggle" onclick="toggleTheme()" class="btn btn-outline-secondary rounded-circle d-flex justify-content-center align-items-center" style="width: 40px; height: 40px;">
                             <svg id="theme-icon-sun" class="d-none" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                             <svg id="theme-icon-moon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                         </button>
@@ -354,33 +349,6 @@
                 });
                 sidebar.addEventListener('hide.bs.offcanvas', function () {
                     sidebar.classList.remove('offcanvas-start');
-                });
-                
-                // Theme Toggle Logic
-                const themeToggleBtn = document.getElementById('theme-toggle');
-                const themeIconSun = document.getElementById('theme-icon-sun');
-                const themeIconMoon = document.getElementById('theme-icon-moon');
-                
-                function updateThemeIcons(theme) {
-                    if (theme === 'dark') {
-                        themeIconMoon.classList.add('d-none');
-                        themeIconSun.classList.remove('d-none');
-                    } else {
-                        themeIconSun.classList.add('d-none');
-                        themeIconMoon.classList.remove('d-none');
-                    }
-                }
-                
-                const currentTheme = document.documentElement.getAttribute('data-bs-theme');
-                updateThemeIcons(currentTheme);
-                
-                themeToggleBtn.addEventListener('click', () => {
-                    const currentTheme = document.documentElement.getAttribute('data-bs-theme');
-                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                    
-                    document.documentElement.setAttribute('data-bs-theme', newTheme);
-                    localStorage.setItem('theme', newTheme);
-                    updateThemeIcons(newTheme);
                 });
             });
         </script>

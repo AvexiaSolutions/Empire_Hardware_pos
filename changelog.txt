@@ -1,0 +1,12 @@
+v1.1 Changelog
+================
+- Setup new PHP version (8.5.8).
+- Updated Laravel version from 13.16.1 to 13.18.1.
+- Implemented global Dark/Light mode synchronization across all layouts.
+- Added Single Page Application (SPA) style live navigation to prevent full page reloads.
+- Integrated Laravel Reverb (WebSockets) for instant event-driven UI updates across POS terminals.
+- Implemented strict Database Locking (Pessimistic Locking) to prevent race conditions during simultaneous checkouts.
+- Added username to users table.
+- Implemented role-based invoice visibility: Cashiers can only view their own processed invoices, while Admins can view all invoices with a "Billed By" indicator.
+- Fixed an issue where the Invoice menu item was incorrectly displayed based on POS permissions instead of Invoice permissions.
+- Implemented strict route security and redirect logic for Cashier roles to prevent unauthorized access to hidden pages.

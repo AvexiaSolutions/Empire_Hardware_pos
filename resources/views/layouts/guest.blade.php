@@ -103,6 +103,7 @@
                 }
             }
         </style>
+        <x-theme-script />
     </head>
     <body class="text-body vh-100 overflow-hidden d-flex align-items-center justify-content-center">
         <div class="bg-overlay"></div>

@@ -19,6 +19,7 @@
 
         <!-- Scripts -->
         @vite(['resources/sass/app.scss', 'resources/css/app.css', 'resources/js/app.js'])
+        <x-theme-script />
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-body">

@@ -361,11 +361,15 @@
                     <div class="modal-body p-3">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Name</label>
-                            <input type="text" name="name" class="form-control rounded-3 py-2" required>
+                            <input type="text" name="name" class="form-control rounded-3 py-2" required autocomplete="off">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Username <small class="text-muted">(Optional)</small></label>
+                            <input type="text" name="username" class="form-control rounded-3 py-2" autocomplete="off">
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Email</label>
-                            <input type="email" name="email" class="form-control rounded-3 py-2" required>
+                            <input type="email" name="email" class="form-control rounded-3 py-2" required autocomplete="off">
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Role</label>
@@ -377,7 +381,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Password</label>
-                            <input type="password" name="password" class="form-control rounded-3 py-2" required>
+                            <input type="password" name="password" class="form-control rounded-3 py-2" required autocomplete="new-password">
                         </div>
                     </div>
                     <div class="modal-footer border-top-0 pt-0">
@@ -404,11 +408,15 @@
                     <div class="modal-body p-3">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Name</label>
-                            <input type="text" name="name" class="form-control rounded-3 py-2" value="{{ $user->name }}" required>
+                            <input type="text" name="name" class="form-control rounded-3 py-2" value="{{ $user->name }}" required autocomplete="off">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Username <small class="text-muted">(Optional)</small></label>
+                            <input type="text" name="username" class="form-control rounded-3 py-2" value="{{ $user->username }}" autocomplete="off">
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Email</label>
-                            <input type="email" name="email" class="form-control rounded-3 py-2" value="{{ $user->email }}" required>
+                            <input type="email" name="email" class="form-control rounded-3 py-2" value="{{ $user->email }}" required autocomplete="off">
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Role</label>
@@ -420,7 +428,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Password <small class="text-muted">(Leave blank to keep current)</small></label>
-                            <input type="password" name="password" class="form-control rounded-3 py-2">
+                            <input type="password" name="password" class="form-control rounded-3 py-2" autocomplete="new-password">
                         </div>
                     </div>
                     <div class="modal-footer border-top-0 pt-0">

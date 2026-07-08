@@ -113,6 +113,9 @@
                             <th class="py-3 px-4 fw-bold bg-primary-subtle text-primary">{{ __('Invoice No') }}</th>
                             <th class="py-3 px-4 fw-bold bg-primary-subtle text-primary">{{ __('Date') }}</th>
                             <th class="py-3 px-4 fw-bold bg-primary-subtle text-primary">{{ __('Cus. Name') }}</th>
+                            @if(auth()->user()->role === 'admin')
+                                <th class="py-3 px-4 fw-bold bg-primary-subtle text-primary">{{ __('Billed By') }}</th>
+                            @endif
                             <th class="py-3 px-4 fw-bold bg-primary-subtle text-primary">{{ __('Total') }}</th>
                             <th class="py-3 px-4 fw-bold bg-primary-subtle text-primary">{{ __('Tendered') }}</th>
                             <th class="py-3 px-4 fw-bold bg-primary-subtle text-primary">{{ __('Balance') }}</th>
@@ -126,6 +129,9 @@
                                 <td class="py-3 px-4">{{ $inv->invoice_no }}</td>
                                 <td class="py-3 px-4">{{ $inv->date }}</td>
                                 <td class="py-3 px-4">{{ $inv->customer_name ?: __('Walk-in') }}</td>
+                                @if(auth()->user()->role === 'admin')
+                                    <td class="py-3 px-4 text-muted fw-bold">{{ $inv->user->name ?? __('System') }}</td>
+                                @endif
                                 <td class="py-3 px-4 text-primary">Rs.{{ number_format($inv->total, 2) }}</td>
                                 <td class="py-3 px-4">Rs.{{ number_format($inv->tendered_amount, 2) }}</td>
                                 <td class="py-3 px-4 {{ $inv->balance_amount < 0 ? 'text-danger fw-bold' : '' }}">

@@ -21,6 +21,12 @@ class AdminMiddleware
             
             // Map route prefixes to permission keys
             $permissionMap = [
+                'pos.' => 'pos.access',
+                'invoice.' => 'invoice.access',
+                'item.' => 'item.access',
+                'category.' => 'item.access',
+                'subcategory.' => 'item.access',
+                'warranty-returns.' => 'returns.access',
                 'supplier.' => 'supplier.access',
                 'account' => 'account.access',
                 'expenses.' => 'expenses.access',
@@ -32,16 +38,19 @@ class AdminMiddleware
             foreach ($permissionMap as $routePrefix => $permissionKey) {
                 if (str_starts_with($routeName ?? '', $routePrefix)) {
                     if (!$user->hasPermission($permissionKey)) {
-                        return redirect()->route('pos.index')->with('error', 'You do not have permission to access this page.');
+                        return redirect()->route('no-access')->with('error', 'You do not have permission to access this page.');
                     }
                     return $next($request);
                 }
             }
             
-            // Dashboard and activity logs are strictly admin
-            if (in_array($routeName, ['dashboard', 'activity-logs.index'])) {
-                return redirect()->route('pos.index')->with('error', 'You do not have permission to access this page.');
+            // Allow public shared routes
+            if (in_array($routeName, ['no-access', 'lang.switch', 'logout'])) {
+                return $next($request);
             }
+
+            // Block everything else for non-admins
+            return redirect()->route('no-access')->with('error', 'You do not have permission to access this page.');
         }
 
         return $next($request);

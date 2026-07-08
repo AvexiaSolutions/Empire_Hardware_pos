@@ -11,8 +11,14 @@ class InvoiceManagement extends Component
 
     public function render()
     {
-        $query = Invoice::query();
-        $debtorQuery = Invoice::where('balance_amount', '<', 0);
+        $query = Invoice::with('user');
+        $debtorQuery = Invoice::with('user')->where('balance_amount', '<', 0);
+
+        // Restrict to user's own invoices if they are not admin
+        if (auth()->check() && auth()->user()->role !== 'admin') {
+            $query->where('user_id', auth()->id());
+            $debtorQuery->where('user_id', auth()->id());
+        }
 
         if ($this->dateFilter) {
             $query->whereDate('created_at', $this->dateFilter);

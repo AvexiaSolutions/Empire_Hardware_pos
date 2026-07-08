@@ -4,15 +4,38 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     if (auth()->check()) {
-        if (auth()->user()->role === 'admin') {
+        $user = auth()->user();
+        if ($user->role === 'admin') {
             return redirect()->route('dashboard');
         }
-        return redirect()->route('pos.index');
+        
+        $permissions = [
+            'pos.access' => 'pos.index',
+            'invoice.access' => 'invoice.index',
+            'item.access' => 'item.index',
+            'returns.access' => 'warranty-returns.index',
+            'supplier.access' => 'supplier.index',
+            'account.access' => 'account',
+            'expenses.access' => 'expenses.index',
+            'employer.access' => 'employer.index',
+            'credit-cheque.access' => 'credit-cheque.index',
+            'settings.access' => 'settings.index',
+        ];
+
+        foreach ($permissions as $perm => $route) {
+            if ($user->hasPermission($perm)) {
+                return redirect()->route($route);
+            }
+        }
+        
+        return redirect()->route('no-access');
     }
     return redirect('/login');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::view('/no-access', 'errors.no-access')->name('no-access')->middleware(['auth']);
+
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // POS Route (Shared)
     Route::get('pos', \App\Livewire\Pos\Index::class)->name('pos.index');
 
@@ -32,8 +55,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('category/create', 'category.create')->name('category.create');
     Route::view('subcategory/create', 'subcategory.create')->name('subcategory.create');
 
-    Route::view('profile', 'profile')->name('profile');
-    
     // Language Switcher (Shared)
     Route::get('lang/{lang}', [App\Http\Controllers\LanguageController::class, 'switchLang'])->name('lang.switch');
 });

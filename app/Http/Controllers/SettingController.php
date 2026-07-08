@@ -64,6 +64,7 @@ class SettingController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'username' => 'nullable|string|max:255|unique:users',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
             'role' => 'required|string|in:admin,cashier,manager',
@@ -71,6 +72,7 @@ class SettingController extends Controller
 
         User::create([
             'name' => $request->name,
+            'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
@@ -85,11 +87,13 @@ class SettingController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
+            'username' => 'nullable|string|max:255|unique:users,username,'.$id,
             'email' => 'required|string|email|max:255|unique:users,email,'.$id,
             'role' => 'required|string|in:admin,cashier,manager',
         ]);
 
         $user->name = $request->name;
+        $user->username = $request->username;
         $user->email = $request->email;
         $user->role = $request->role;
 

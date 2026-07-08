@@ -8,6 +8,8 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Credit;
 use App\Models\Category;
+use App\Events\StockUpdated;
+use Livewire\Attributes\On;
 use Illuminate\Support\Facades\DB;
 
 class Index extends Component
@@ -40,6 +42,12 @@ class Index extends Component
 
     public function updatedSearch() { $this->loadItems(); }
     public function updatedSelectedCategory() { $this->loadItems(); }
+
+    #[On('echo:pos,StockUpdated')]
+    public function refreshItems()
+    {
+        $this->loadItems();
+    }
 
     public $barcodeInput = '';
 
@@ -214,6 +222,7 @@ class Index extends Component
 
             $invoice = Invoice::create([
                 'invoice_no' => $invoiceNo,
+                'user_id' => auth()->id(),
                 'type' => $type,
                 'customer_name' => $this->customerName,
                 'date' => now()->toDateString(),
@@ -237,11 +246,15 @@ class Index extends Component
                     'total' => $item['item_total']
                 ]);
                 
-                // Deduct stock
+                // Deduct stock securely with Pessimistic Locking
                 if ($item['batch_id']) {
-                    $batch = \App\Models\ItemBatch::find($item['batch_id']);
+                    $batch = \App\Models\ItemBatch::where('id', $item['batch_id'])->lockForUpdate()->first();
                     if ($batch) {
-                        $batch->decrement('quantity', $item['qty']);
+                        if ($batch->quantity >= $item['qty']) {
+                            $batch->decrement('quantity', $item['qty']);
+                        } else {
+                            throw new \Exception("Insufficient stock for item: {$item['name']}");
+                        }
                     }
                 }
             }
@@ -263,9 +276,11 @@ class Index extends Component
             $this->lastInvoiceId = $invoice->id;
             $this->showPrintModal = true;
             
-            // Note: We don't flash success here as it overlays on the POS, modal is enough.
             // Dispatch browser event to trigger any JS based auto-print listeners if needed
             $this->dispatch('invoice-created', invoiceId: $invoice->id);
+            
+            // Broadcast event to other connected POS users to refresh stock
+            broadcast(new StockUpdated());
         });
     }
 
