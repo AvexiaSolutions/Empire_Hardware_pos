@@ -1,4 +1,4 @@
-# POS System (v1.0)
+# POS System (v1.1)
 
 A Point of Sale (POS) system built with Laravel.
 
