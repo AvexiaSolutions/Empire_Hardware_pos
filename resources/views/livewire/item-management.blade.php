@@ -16,6 +16,9 @@
         <button wire:click="openAddItemModal" class="btn btn-primary-custom px-4 py-2 fw-bold d-inline-flex align-items-center gap-2 small rounded-3" style="font-size: 0.9rem;">
             {{ __('Add New Item') }} <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
         </button>
+        <button wire:click="openBulkPrintModal" class="btn btn-outline-secondary bg-body px-4 py-2 fw-bold d-inline-flex align-items-center gap-2 small rounded-3" style="font-size: 0.9rem;">
+            {{ __('Print Pending Barcodes') }} <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+        </button>
         @endif
     </div>
 
@@ -95,8 +98,16 @@
                                         </div>
                                     @endif
                                     <div>
-                                        <span class="d-block text-primary-custom fw-bold">{{ $item->code }}</span>
-                                        <span class="fs-6 text-body">{{ $item->name }}</span>
+                                        <span class="fs-6 fw-bold text-primary-custom mb-1 d-block">{{ $item->name }}</span>
+                                        <div class="d-flex align-items-center gap-2">
+                                            @php
+                                                $generator = new Picqer\Barcode\BarcodeGeneratorSVG();
+                                            @endphp
+                                            <div class="bg-white px-2 py-1 rounded border d-inline-block">
+                                                {!! $generator->getBarcode($item->code, $generator::TYPE_CODE_128, 1.2, 25) !!}
+                                            </div>
+                                            <span class="small text-muted">{{ $item->code }}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -118,17 +129,25 @@
                             </td>
                             <td class="py-3 px-4 text-end">
                                 <div class="d-flex justify-content-end gap-2">
-                                    <button wire:click="openAddStockModal({{ $item->id }})" class="btn btn-sm btn-primary-custom d-inline-flex align-items-center gap-1">
-                                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg> {{ __('Stock') }}
+                                    <button wire:click="openItemPrintModal({{ $item->id }})" class="btn btn-sm btn-outline-secondary bg-body" title="{{ __('Print Barcodes') }}">
+                                        <i class="fas fa-print"></i>
                                     </button>
+                                    <button wire:click="openAddStockModal({{ $item->id }})" class="btn btn-sm btn-primary-custom" title="{{ __('Add Stock') }}">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                    @if(!$item->is_loose)
+                                    <button wire:click="openConvertToLooseModal({{ $item->id }})" class="btn btn-sm btn-warning" title="{{ __('Convert to Loose') }}">
+                                        <i class="fas fa-box-open text-white"></i>
+                                    </button>
+                                    @endif
                                     @if(auth()->check() && auth()->user()->hasPermission('item.edit'))
-                                    <button wire:click="editItem({{ $item->id }})" class="btn btn-sm btn-light border">
-                                        {{ __('Edit') }}
+                                    <button wire:click="editItem({{ $item->id }})" class="btn btn-sm btn-light border" title="{{ __('Edit') }}">
+                                        <i class="fas fa-edit"></i>
                                     </button>
                                     @endif
                                     @if(auth()->check() && auth()->user()->hasPermission('item.delete'))
-                                    <button wire:click="removeItem({{ $item->id }})" class="btn btn-sm btn-outline-danger">
-                                        {{ __('Remove') }}
+                                    <button wire:click="removeItem({{ $item->id }})" class="btn btn-sm btn-outline-danger" title="{{ __('Remove') }}">
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                     @endif
                                 </div>

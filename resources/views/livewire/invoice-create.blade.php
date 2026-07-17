@@ -71,12 +71,14 @@
                         <tr>
                             <td class="py-3"><input type="text" class="form-control form-control-sm rounded-3 bg-body" value="{{ $item['barcode'] }}" readonly></td>
                             <td class="py-3">
-                                <input type="text" class="form-control form-control-sm rounded-3 bg-body" value="{{ $item['name'] }}" readonly>
-                                @if($item['has_bulk'])
+                                <input type="text" class="form-control form-control-sm rounded-3 bg-body" value="{{ $item['name'] }}{{ $item['expiry_date'] ? ' (Exp: ' . $item['expiry_date'] . ')' : '' }}" readonly>
+                                @if(count($item['bulk_options']) > 0)
                                 <div class="mt-2">
                                     <select wire:change="updateCart({{ $batchId }}, 'sale_type', $event.target.value)" class="form-select form-select-sm rounded-3 bg-body-tertiary text-primary fw-bold border-primary">
                                         <option value="base" {{ $item['sale_type'] == 'base' ? 'selected' : '' }}>{{ $item['base_unit'] }}</option>
-                                        <option value="bulk" {{ $item['sale_type'] == 'bulk' ? 'selected' : '' }}>{{ $item['bulk_unit'] }}</option>
+                                        @foreach($item['bulk_options'] as $bpId => $bOpt)
+                                        <option value="{{ $bpId }}" {{ $item['sale_type'] == $bpId ? 'selected' : '' }}>{{ $bOpt['name'] }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                                 @else
@@ -116,7 +118,7 @@
                                 <select wire:model="manualBatchId" wire:change="addManualItem" class="form-select form-select-sm rounded-3 bg-body-tertiary">
                                     <option value="">{{ __('Select Item Manually') }}</option>
                                     @foreach($availableBatches as $batch)
-                                        <option value="{{ $batch->id }}">{{ $batch->item->name }} ({{ $batch->barcode }}) - Rs.{{ $batch->selling_price }}</option>
+                                        <option value="{{ $batch->id }}">{{ $batch->item->name }} ({{ $batch->barcode }}){{ $batch->expiry_date ? ' | Exp: ' . $batch->expiry_date->format('Y-m-d') : '' }} - Rs.{{ $batch->selling_price }}</option>
                                     @endforeach
                                 </select>
                             </td>

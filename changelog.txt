@@ -1,5 +1,0 @@
-v1.2 Changelog
-================
-- Created `maintenance.bat` utility script to easily clear system cache and recreate storage symbolic links.
-- Created `run_servers.bat` script to start the Laravel web server, Reverb WebSocket server, and queue workers.
-- Created `startup.vbs` script to run the POS servers silently in the background at Windows startup without visible terminal windows.

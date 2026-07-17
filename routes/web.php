@@ -38,6 +38,7 @@ Route::view('/no-access', 'errors.no-access')->name('no-access')->middleware(['a
 Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     // POS Route (Shared)
     Route::get('pos', \App\Livewire\Pos\Index::class)->name('pos.index');
+    Route::get('customer-display', \App\Livewire\Pos\CustomerDisplay::class)->name('customer-display');
 
     // Invoice Routes (Shared)
     Route::get('invoice', \App\Livewire\InvoiceManagement::class)->name('invoice.index');
@@ -84,6 +85,9 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
 
     // Activity Logs
     Route::get('/activity-logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
+
+    // AI Assistant
+    Route::get('/ai-assistant', \App\Livewire\Dashboard\AiAssistant::class)->name('ai.assistant');
 
     // Settings
     Route::prefix('settings')->name('settings.')->group(function () {

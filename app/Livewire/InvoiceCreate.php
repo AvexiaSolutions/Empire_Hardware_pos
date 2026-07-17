@@ -84,8 +84,42 @@ class InvoiceCreate extends Component
         if (isset($this->cart[$batchId])) {
             $this->cart[$batchId]['quantity']++;
         } else {
-            $batch = \App\Models\ItemBatch::with('item')->find($batchId);
+            $batch = \App\Models\ItemBatch::with(['item.bulkUnits', 'bulkPrices.bulkUnit'])->find($batchId);
             if ($batch) {
+                $discStr = $batch->discount ?: '';
+                $discType = 'Rs';
+                $discVal = 0;
+                if (str_ends_with(trim($discStr), '%')) {
+                    $discType = '%';
+                    $discVal = floatval(str_replace('%', '', $discStr));
+                } else {
+                    $discVal = floatval($discStr);
+                }
+
+                $bulkOptions = [];
+                foreach ($batch->bulkPrices as $bp) {
+                    $bDiscStr = $bp->discount ?: '';
+                    $bDiscType = 'Rs';
+                    $bDiscVal = 0;
+                    if (str_ends_with(trim($bDiscStr), '%')) {
+                        $bDiscType = '%';
+                        $bDiscVal = floatval(str_replace('%', '', $bDiscStr));
+                    } else {
+                        $bDiscVal = floatval($bDiscStr);
+                    }
+                    
+                    if ($bp->bulkUnit) {
+                        $bulkOptions[$bp->item_bulk_unit_id] = [
+                            'id' => $bp->item_bulk_unit_id,
+                            'name' => $bp->bulkUnit->name,
+                            'conversion_factor' => $bp->bulkUnit->conversion_factor,
+                            'rate' => $bp->selling_price,
+                            'discount' => $bDiscVal,
+                            'discount_type' => $bDiscType
+                        ];
+                    }
+                }
+
                 $this->cart[$batchId] = [
                     'batch_id' => $batch->id,
                     'item_id' => $batch->item_id,
@@ -94,17 +128,18 @@ class InvoiceCreate extends Component
                     'unit' => $batch->item->base_unit,
                     'rate' => $batch->selling_price,
                     'quantity' => 1,
-                    'discount' => 0,
-                    'discount_type' => 'Rs', // or '%'
+                    'discount' => $discVal,
+                    'discount_type' => $discType,
+                    'expiry_date' => $batch->expiry_date ? $batch->expiry_date->format('Y-m-d') : null,
                     
-                    // Bulk pricing properties
-                    'sale_type' => 'base', // 'base' or 'bulk'
-                    'has_bulk' => $batch->item->has_bulk_unit,
+                    'sale_type' => 'base', // 'base' or bulk unit ID
                     'base_unit' => $batch->item->base_unit,
-                    'bulk_unit' => $batch->item->bulk_unit,
                     'base_rate' => $batch->selling_price,
-                    'bulk_rate' => $batch->bulk_selling_price,
-                    'conversion_factor' => $batch->item->bulk_conversion_factor,
+                    'base_discount' => $discVal,
+                    'base_discount_type' => $discType,
+                    
+                    'bulk_options' => $bulkOptions,
+                    'conversion_factor' => 1,
                 ];
             }
         }
@@ -117,9 +152,18 @@ class InvoiceCreate extends Component
             $this->cart[$batchId][$field] = $value;
             
             if ($field === 'sale_type') {
-                $this->cart[$batchId]['rate'] = $value === 'bulk' 
-                    ? $this->cart[$batchId]['bulk_rate'] 
-                    : $this->cart[$batchId]['base_rate'];
+                if ($value === 'base') {
+                    $this->cart[$batchId]['rate'] = $this->cart[$batchId]['base_rate'];
+                    $this->cart[$batchId]['discount'] = $this->cart[$batchId]['base_discount'];
+                    $this->cart[$batchId]['discount_type'] = $this->cart[$batchId]['base_discount_type'];
+                    $this->cart[$batchId]['conversion_factor'] = 1;
+                } elseif (isset($this->cart[$batchId]['bulk_options'][$value])) {
+                    $bOpt = $this->cart[$batchId]['bulk_options'][$value];
+                    $this->cart[$batchId]['rate'] = $bOpt['rate'];
+                    $this->cart[$batchId]['discount'] = $bOpt['discount'];
+                    $this->cart[$batchId]['discount_type'] = $bOpt['discount_type'];
+                    $this->cart[$batchId]['conversion_factor'] = $bOpt['conversion_factor'];
+                }
             }
             
             $this->calculateTotals();
@@ -205,7 +249,7 @@ class InvoiceCreate extends Component
             // Deduct stock from batch
             $batch = \App\Models\ItemBatch::find($item['batch_id']);
             if($batch) {
-                $deductQty = $item['sale_type'] === 'bulk' 
+                $deductQty = $item['sale_type'] !== 'base' 
                     ? ($item['quantity'] * $item['conversion_factor']) 
                     : $item['quantity'];
                     

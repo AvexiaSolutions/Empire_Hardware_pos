@@ -24,9 +24,7 @@ class Item extends Model
         'name',
         'image',
         'base_unit',
-        'has_bulk_unit',
-        'bulk_unit',
-        'bulk_conversion_factor',
+        'has_expiry_date',
         'has_warranty',
         'warranty_months',
         'category_id',
@@ -34,6 +32,8 @@ class Item extends Model
         'search_aliases',
         'rack_number',
         'rack_row',
+        'is_loose',
+        'parent_item_id',
     ];
 
     public function category()
@@ -54,6 +54,16 @@ class Item extends Model
     public function invoiceItems()
     {
         return $this->hasMany(InvoiceItem::class);
+    }
+    
+    public function parent()
+    {
+        return $this->belongsTo(Item::class, 'parent_item_id');
+    }
+
+    public function looseItems()
+    {
+        return $this->hasMany(Item::class, 'parent_item_id');
     }
 
     public function getTotalStock()

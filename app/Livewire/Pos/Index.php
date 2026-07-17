@@ -34,10 +34,76 @@ class Index extends Component
     public $grandTotal = 0;
     public $balance = 0;
 
+    // Cash Register State
+    public $activeRegister = null;
+    public $showOpenRegisterModal = false;
+    public $showCloseRegisterModal = false;
+    public $registerOpeningBalance = 0;
+    public $registerClosingBalance = 0;
+    public $registerNotes = '';
+
     public function mount()
     {
         $this->categories = Category::orderBy('name')->get();
         $this->loadItems();
+
+        $this->activeRegister = \App\Models\CashRegister::where('user_id', auth()->id())
+            ->where('status', 'Open')
+            ->first();
+
+        if (!$this->activeRegister) {
+            $this->showOpenRegisterModal = true;
+        }
+    }
+
+    public function openRegister()
+    {
+        $this->validate(['registerOpeningBalance' => 'required|numeric|min:0']);
+        
+        $this->activeRegister = \App\Models\CashRegister::create([
+            'user_id' => auth()->id(),
+            'opening_time' => now(),
+            'opening_balance' => $this->registerOpeningBalance,
+            'status' => 'Open'
+        ]);
+
+        $this->showOpenRegisterModal = false;
+    }
+
+    public function openCloseRegisterModal()
+    {
+        if ($this->activeRegister) {
+            $expected = $this->activeRegister->opening_balance + \App\Models\Invoice::where('cash_register_id', $this->activeRegister->id)->where('type', 'Cash')->sum('tendered_amount') - \App\Models\Invoice::where('cash_register_id', $this->activeRegister->id)->where('type', 'Cash')->where('balance_amount', '<', 0)->sum(DB::raw('abs(balance_amount)'));
+            // A safer expected calculation for cash is: Total Cash Collected
+            // Let's do a simpler expected balance:
+            $totalCashInvoices = \App\Models\Invoice::where('cash_register_id', $this->activeRegister->id)->where('type', 'Cash')->get();
+            $cashCollected = 0;
+            foreach ($totalCashInvoices as $inv) {
+                // Cash collected = tendered - change. If change is negative (balance < 0), we only collected tendered amount, but actually if credit it's not cash.
+                // Assuming all Cash invoices, collected cash is the invoice total.
+                $cashCollected += $inv->total;
+            }
+            $this->activeRegister->expected_closing_balance = $this->activeRegister->opening_balance + $cashCollected;
+            $this->registerClosingBalance = $this->activeRegister->expected_closing_balance;
+            $this->showCloseRegisterModal = true;
+        }
+    }
+
+    public function closeRegister()
+    {
+        $this->validate(['registerClosingBalance' => 'required|numeric|min:0']);
+        
+        $this->activeRegister->update([
+            'closing_time' => now(),
+            'closing_balance' => $this->registerClosingBalance,
+            'status' => 'Closed',
+            'notes' => $this->registerNotes
+        ]);
+
+        $this->activeRegister = null;
+        $this->showCloseRegisterModal = false;
+        $this->showOpenRegisterModal = true;
+        $this->registerOpeningBalance = 0;
     }
 
     public function updatedSearch() { $this->loadItems(); }
@@ -53,13 +119,18 @@ class Index extends Component
 
     public function loadItems()
     {
-        $query = Item::with('batches')->withSum('invoiceItems', 'quantity');
+        $query = Item::with(['batches' => function($q) {
+            $q->where('is_active', true)->where('quantity', '>', 0);
+        }])->withSum('invoiceItems', 'quantity');
 
         if (strlen($this->search) > 0) {
             $query->where(function($q) {
                 $q->where('name', 'like', '%' . $this->search . '%')
                   ->orWhere('code', 'like', '%' . $this->search . '%')
-                  ->orWhere('search_aliases', 'like', '%' . $this->search . '%');
+                  ->orWhere('search_aliases', 'like', '%' . $this->search . '%')
+                  ->orWhereHas('batches', function($q2) {
+                      $q2->where('barcode', 'like', '%' . $this->search . '%');
+                  });
             });
         }
 
@@ -69,7 +140,6 @@ class Index extends Component
 
         $this->searchResults = $query->orderByDesc('invoice_items_sum_quantity')
             ->orderByDesc('id') // fallback for new items
-            ->take(24)
             ->get();
     }
 
@@ -79,10 +149,22 @@ class Index extends Component
             return;
         }
 
-        $item = Item::where('code', $this->barcodeInput)->with('batches')->first();
+        // 1. Try to find an exact batch match (loose barcode)
+        $batch = \App\Models\ItemBatch::where('barcode', $this->barcodeInput)
+            ->where('is_active', true)
+            ->with('item.batches')
+            ->first();
+
+        if ($batch) {
+            $this->addToCart($batch->item_id, $batch->id);
+            $this->barcodeInput = '';
+            return;
+        }
+
+        // 2. Fallback to generic item code match
+        $item = Item::where('code', $this->barcodeInput)->first();
         if ($item) {
-            $this->addToCart($item->id);
-            // Optionally flash a success message or play a beep here
+            $this->selectItem($item->id);
         } else {
             session()->flash('error', 'Item with barcode "' . $this->barcodeInput . '" not found.');
         }
@@ -90,17 +172,43 @@ class Index extends Component
         $this->barcodeInput = ''; // clear input for next scan
     }
 
+    public $showBatchSelectionModal = false;
+    public $selectedItemForBatches = null;
 
-    public function addToCart($itemId)
+    public function selectItem($itemId)
     {
-        $item = Item::with('batches')->find($itemId);
+        $item = Item::with(['batches' => function($q) {
+            $q->where('is_active', true)->where('quantity', '>', 0);
+        }])->find($itemId);
+
         if (!$item) return;
 
-        $batch = $item->batches->first();
-        $price = $batch ? $batch->selling_price : 0;
-        $batchId = $batch ? $batch->id : null;
+        if ($item->batches->count() > 1) {
+            $this->selectedItemForBatches = $item;
+            $this->showBatchSelectionModal = true;
+        } else {
+            $batch = $item->batches->first();
+            $this->addToCart($item->id, $batch ? $batch->id : null);
+        }
+    }
 
-        $existingIndex = collect($this->cart)->search(fn($c) => $c['item_id'] == $itemId);
+    public function addToCart($itemId, $batchId = null)
+    {
+        $item = Item::find($itemId);
+        if (!$item) return;
+
+        if ($batchId) {
+            $batch = $item->batches->firstWhere('id', $batchId);
+        } else {
+            $batch = $item->batches->first();
+        }
+
+        $actualBatchId = $batch ? $batch->id : null;
+        
+        $price = $batch ? $batch->selling_price : 0;
+
+        // Ensure we check for duplicate specific batch
+        $existingIndex = collect($this->cart)->search(fn($c) => $c['item_id'] == $itemId && $c['batch_id'] == $actualBatchId);
         
         $currentCartQty = $existingIndex !== false ? $this->cart[$existingIndex]['qty'] : 0;
         $availableStock = $batch ? $batch->quantity : 0;
@@ -116,8 +224,8 @@ class Index extends Component
             $this->cart[] = [
                 'cart_id' => uniqid(),
                 'item_id' => $item->id,
-                'batch_id' => $batchId,
-                'name' => $item->name,
+                'batch_id' => $actualBatchId,
+                'name' => $item->name . ($batch && $batch->batch_no ? ' (' . $batch->batch_no . ')' : ''),
                 'code' => $item->code,
                 'price' => $price,
                 'qty' => 1,
@@ -128,6 +236,7 @@ class Index extends Component
             ];
         }
 
+        $this->showBatchSelectionModal = false;
         $this->search = '';
         $this->loadItems();
         $this->calculateTotals();
@@ -203,6 +312,8 @@ class Index extends Component
 
         $this->grandTotal = max(0, $this->subTotal - $billDiscountAmt);
         $this->balance = (float)$this->tenderedAmount - $this->grandTotal;
+        
+        broadcast(new \App\Events\CartUpdated($this->cart, $this->grandTotal));
     }
 
     public function checkout()
@@ -223,6 +334,7 @@ class Index extends Component
             $invoice = Invoice::create([
                 'invoice_no' => $invoiceNo,
                 'user_id' => auth()->id(),
+                'cash_register_id' => $this->activeRegister ? $this->activeRegister->id : null,
                 'type' => $type,
                 'customer_name' => $this->customerName,
                 'date' => now()->toDateString(),
@@ -250,8 +362,9 @@ class Index extends Component
                 if ($item['batch_id']) {
                     $batch = \App\Models\ItemBatch::where('id', $item['batch_id'])->lockForUpdate()->first();
                     if ($batch) {
-                        if ($batch->quantity >= $item['qty']) {
-                            $batch->decrement('quantity', $item['qty']);
+                        $qtyToDeduct = $item['qty'];
+                        if ($batch->quantity >= $qtyToDeduct) {
+                            $batch->decrement('quantity', $qtyToDeduct);
                         } else {
                             throw new \Exception("Insufficient stock for item: {$item['name']}");
                         }

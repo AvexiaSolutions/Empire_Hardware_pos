@@ -2,6 +2,9 @@
 title POS System - Background Services
 cd /d "%~dp0"
 
+:: Start MySQL Server (Portable)
+start /b "" "..\mysql\bin\mysqld.exe"
+
 :: Start Laravel Web Server on port 8000
 start /b php artisan serve --host=127.0.0.1 --port=8000
 

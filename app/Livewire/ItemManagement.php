@@ -22,6 +22,13 @@ class ItemManagement extends Component
     public $showAddStockModal = false;
     public $showEditItemModal = false;
     public $showItemDetailsModal = false;
+    public $showPrintModal = false;
+    public $showBulkPrintModal = false;
+
+    // Print Forms
+    public $printBatchId;
+    public $printCopies = 1;
+    public $pendingBatchesToPrint = [];
 
     // Category form
     public $categoryName = '';
@@ -39,22 +46,29 @@ class ItemManagement extends Component
     public $itemDiscount = '';
     public $itemQuantity = '';
     public $itemBaseUnit = '';
-    public $itemHasBulkUnit = false;
-    public $itemBulkUnit = '';
-    public $itemBulkConversionFactor = 1;
-    public $itemBulkCostPrice = '';
-    public $itemBulkSellingPrice = '';
+
     public $itemHasWarranty = 0;
     public $itemWarrantyMonths = 0;
+    public $itemHasExpiryDate = false;
+    public $expiryDates = [];
     public $itemSearchAliases = '';
     public $itemRackNumber = '';
     public $itemRackRow = '';
 
-    // Stock Form
     public $stockItemId;
     public $stockQuantity = '';
     public $stockCostPrice = '';
     public $stockSellingPrice = '';
+    public $stockDiscount = '';
+    public $stockExpiryDates = [];
+
+    // Convert to Loose
+    public $showConvertToLooseModal = false;
+    public $convertParentItemId;
+    public $convertParentItemName = '';
+    public $convertConversionFactor = '';
+    public $convertLoosePrice = '';
+    public $convertQuantityToOpen = '';
 
     // Edit Item
     public $editingItemId;
@@ -84,13 +98,17 @@ class ItemManagement extends Component
                   });
         }
 
-        $this->items = $query->orderBy('id', 'desc')->get();
+        $this->items = $query->orderBy('name')->get();
     }
 
     public function updatedSearchQuery()
     {
         $this->loadData();
     }
+
+    // Auto-calculation from bulk to single removed as requested by user
+
+
 
     // Modal Actions
     public function openAddCategoryModal() { $this->showAddCategoryModal = true; }
@@ -103,6 +121,12 @@ class ItemManagement extends Component
             $latestBatch = $item->batches()->latest()->first();
             $this->stockCostPrice = $latestBatch ? $latestBatch->getRawOriginal('cost_price') : 0;
             $this->stockSellingPrice = $latestBatch ? $latestBatch->selling_price : 0;
+            $this->stockDiscount = $latestBatch ? $latestBatch->discount : '';
+            $this->stockBulkCostPrice = $latestBatch ? $latestBatch->getRawOriginal('bulk_cost_price') : 0;
+            $this->stockBulkSellingPrice = $latestBatch ? $latestBatch->bulk_selling_price : 0;
+            $this->stockBulkDiscount = $latestBatch ? $latestBatch->bulk_discount : '';
+            $this->stockAddByBulk = false;
+            $this->stockBulkQuantity = '';
         }
         $this->showAddStockModal = true; 
     }
@@ -113,7 +137,32 @@ class ItemManagement extends Component
         $this->showAddStockModal = false;
         $this->showEditItemModal = false;
         $this->showItemDetailsModal = false;
+        $this->showPrintModal = false;
+        $this->showBulkPrintModal = false;
+        $this->showConvertToLooseModal = false;
         $this->resetForm();
+    }
+
+
+
+    public function addExpiryDateRow($forStock = false)
+    {
+        if ($forStock) {
+            $this->stockExpiryDates[] = ['date' => '', 'quantity' => ''];
+        } else {
+            $this->expiryDates[] = ['date' => '', 'quantity' => ''];
+        }
+    }
+
+    public function removeExpiryDateRow($index, $forStock = false)
+    {
+        if ($forStock) {
+            unset($this->stockExpiryDates[$index]);
+            $this->stockExpiryDates = array_values($this->stockExpiryDates);
+        } else {
+            unset($this->expiryDates[$index]);
+            $this->expiryDates = array_values($this->expiryDates);
+        }
     }
 
     public function resetForm()
@@ -130,13 +179,10 @@ class ItemManagement extends Component
         $this->itemDiscount = '';
         $this->itemQuantity = '';
         $this->itemBaseUnit = '';
-        $this->itemHasBulkUnit = false;
-        $this->itemBulkUnit = '';
-        $this->itemBulkConversionFactor = 1;
-        $this->itemBulkCostPrice = '';
-        $this->itemBulkSellingPrice = '';
         $this->itemHasWarranty = 0;
         $this->itemWarrantyMonths = 0;
+        $this->itemHasExpiryDate = false;
+        $this->expiryDates = [];
         $this->itemSearchAliases = '';
         $this->itemRackNumber = '';
         $this->itemRackRow = '';
@@ -145,9 +191,20 @@ class ItemManagement extends Component
         $this->stockQuantity = '';
         $this->stockCostPrice = '';
         $this->stockSellingPrice = '';
+        $this->stockDiscount = '';
 
+        $this->convertParentItemId = null;
+        $this->convertParentItemName = '';
+        $this->convertConversionFactor = '';
+        $this->convertLoosePrice = '';
+        $this->convertQuantityToOpen = '';
+        $this->stockExpiryDates = [];
         $this->editingItemId = null;
         $this->viewingItemId = null;
+        
+        $this->printBatchId = null;
+        $this->printCopies = 1;
+        $this->pendingBatchesToPrint = [];
     }
 
     // Saves
@@ -183,10 +240,6 @@ class ItemManagement extends Component
             'itemQuantity' => 'required|numeric|min:0',
             'itemCostPrice' => 'required|numeric|min:0',
             'itemSellingPrice' => 'required|numeric|min:0',
-            'itemBulkUnit' => $this->itemHasBulkUnit ? 'required|string' : 'nullable',
-            'itemBulkConversionFactor' => $this->itemHasBulkUnit ? 'required|numeric|min:0.01' : 'nullable',
-            'itemBulkCostPrice' => $this->itemHasBulkUnit ? 'required|numeric|min:0' : 'nullable',
-            'itemBulkSellingPrice' => $this->itemHasBulkUnit ? 'required|numeric|min:0' : 'nullable',
             'itemSearchAliases' => 'nullable|string|max:255',
             'itemRackNumber' => 'nullable|string|max:50',
             'itemRackRow' => 'nullable|string|max:50',
@@ -219,9 +272,7 @@ class ItemManagement extends Component
             'name' => $this->itemName,
             'image' => $imagePath,
             'base_unit' => $this->itemBaseUnit,
-            'has_bulk_unit' => $this->itemHasBulkUnit,
-            'bulk_unit' => $this->itemHasBulkUnit ? $this->itemBulkUnit : null,
-            'bulk_conversion_factor' => $this->itemHasBulkUnit ? ($this->itemBulkConversionFactor ?: 1) : 1,
+            'has_expiry_date' => $this->itemHasExpiryDate,
             'has_warranty' => $this->itemHasWarranty,
             'warranty_months' => $this->itemHasWarranty ? $this->itemWarrantyMonths : 0,
             'category_id' => $catId,
@@ -231,17 +282,72 @@ class ItemManagement extends Component
             'rack_row' => $this->itemRackRow,
         ]);
 
-        // Create first batch B01
-        $item->batches()->create([
-            'batch_no' => 'B01',
-            'barcode' => $baseCode . '-B01',
-            'cost_price' => $this->itemCostPrice,
-            'selling_price' => $this->itemSellingPrice,
-            'bulk_cost_price' => $this->itemHasBulkUnit ? $this->itemBulkCostPrice : 0,
-            'bulk_selling_price' => $this->itemHasBulkUnit ? $this->itemBulkSellingPrice : 0,
-            'quantity' => $this->itemQuantity,
-            'is_active' => true
-        ]);
+        $createdBatches = [];
+
+        if ($this->itemHasExpiryDate && count($this->expiryDates) > 0) {
+            foreach ($this->expiryDates as $ed) {
+                if (!empty($ed['date']) && $ed['quantity'] > 0) {
+                    $batchCount = $item->batches()->count();
+                    $newBatchNo = 'B' . str_pad($batchCount + 1, 2, '0', STR_PAD_LEFT);
+                    $expiryPart = !empty($ed['date']) ? '-' . date('my', strtotime($ed['date'])) : '';
+                    $newBarcode = $baseCode . '-' . $newBatchNo . $expiryPart;
+
+                    $batch = $item->batches()->create([
+                        'batch_no' => $newBatchNo,
+                        'barcode' => $newBarcode,
+                        'cost_price' => $this->itemCostPrice,
+                        'selling_price' => $this->itemSellingPrice,
+                        'expiry_date' => $ed['date'],
+                        'discount' => $this->itemDiscount,
+                        'quantity' => $ed['quantity'],
+                        'is_active' => true
+                    ]);
+                    $createdBatches[] = $batch;
+                }
+            }
+        } else {
+            $batch = $item->batches()->create([
+                'batch_no' => 'B01',
+                'barcode' => $baseCode . '-B01',
+                'cost_price' => $this->itemCostPrice,
+                'selling_price' => $this->itemSellingPrice,
+                'discount' => $this->itemDiscount,
+                'quantity' => $this->itemQuantity,
+                'is_active' => true
+            ]);
+            $createdBatches[] = $batch;
+        }
+
+        if ($this->itemHasBulkUnit) {
+            // First, save the bulk units to the item
+            $createdBulkUnits = [];
+            foreach ($this->bulkConfigurations as $config) {
+                if (!empty($config['name']) && $config['conversion_factor'] > 0) {
+                    $bulkUnit = $item->bulkUnits()->create([
+                        'name' => $config['name'],
+                        'conversion_factor' => $config['conversion_factor']
+                    ]);
+                    $createdBulkUnits[] = [
+                        'unit' => $bulkUnit,
+                        'cost_price' => $config['cost_price'] ?: 0,
+                        'selling_price' => $config['selling_price'] ?: 0,
+                        'discount' => $config['discount']
+                    ];
+                }
+            }
+
+            // Then, attach bulk prices to all created batches
+            foreach ($createdBatches as $b) {
+                foreach ($createdBulkUnits as $cbu) {
+                    $b->bulkPrices()->create([
+                        'item_bulk_unit_id' => $cbu['unit']->id,
+                        'cost_price' => $cbu['cost_price'],
+                        'selling_price' => $cbu['selling_price'],
+                        'discount' => $cbu['discount']
+                    ]);
+                }
+            }
+        }
 
         session()->flash('success', 'Item and Initial Stock added successfully.');
         $this->loadData();
@@ -251,7 +357,6 @@ class ItemManagement extends Component
     public function saveStock()
     {
         $this->validate([
-            'stockQuantity' => 'required|numeric|min:0.01',
             'stockCostPrice' => 'required|numeric|min:0',
             'stockSellingPrice' => 'required|numeric|min:0',
         ]);
@@ -259,30 +364,58 @@ class ItemManagement extends Component
         $item = \App\Models\Item::find($this->stockItemId);
         if(!$item) return;
 
-        // Smart GRN Logic
         $latestBatch = $item->batches()->latest()->first();
+        $conversionFactor = 1;
 
-        // If selling price is the same as the latest batch, we just add quantity to the latest batch
-        if ($latestBatch && floatval($latestBatch->selling_price) === floatval($this->stockSellingPrice)) {
-            $latestBatch->quantity += $this->stockQuantity;
-            // Optionally update cost price if you want to average it, but simple way is to overwrite or keep oldest. 
-            // We'll update cost price to newest.
-            $latestBatch->cost_price = $this->stockCostPrice; 
-            $latestBatch->save();
+        $stockEntries = [];
+        if ($item->has_expiry_date && count($this->stockExpiryDates) > 0) {
+            foreach ($this->stockExpiryDates as $ed) {
+                if (!empty($ed['date']) && $ed['quantity'] > 0) {
+                    $stockEntries[] = [
+                        'quantity' => floatval($ed['quantity']) * $conversionFactor,
+                        'expiry_date' => $ed['date']
+                    ];
+                }
+            }
         } else {
-            // Price is different, create new batch
-            $batchCount = $item->batches()->count();
-            $newBatchNo = 'B' . str_pad($batchCount + 1, 2, '0', STR_PAD_LEFT);
-            $newBarcode = $item->code . '-' . $newBatchNo;
+            $this->validate(['stockQuantity' => 'required|numeric|min:0.01']);
+            $stockEntries[] = [
+                'quantity' => floatval($this->stockQuantity),
+                'expiry_date' => null
+            ];
+        }
 
-            $item->batches()->create([
-                'batch_no' => $newBatchNo,
-                'barcode' => $newBarcode,
-                'cost_price' => $this->stockCostPrice,
-                'selling_price' => $this->stockSellingPrice,
-                'quantity' => $this->stockQuantity,
-                'is_active' => true
-            ]);
+        foreach ($stockEntries as $entry) {
+            // Find existing active batch with same selling price AND same expiry date (if any)
+            $matchingBatch = $item->batches()
+                ->where('is_active', true)
+                ->where('selling_price', $this->stockSellingPrice)
+                ->when($item->has_expiry_date, function($query) use ($entry) {
+                    return $query->where('expiry_date', $entry['expiry_date']);
+                })
+                ->first();
+
+            if ($matchingBatch) {
+                $matchingBatch->quantity += $entry['quantity'];
+                $matchingBatch->cost_price = $this->stockCostPrice;
+                $matchingBatch->save();
+            } else {
+                $batchCount = $item->batches()->count();
+                $newBatchNo = 'B' . str_pad($batchCount + 1, 2, '0', STR_PAD_LEFT);
+                $expiryPart = !empty($entry['expiry_date']) ? '-' . date('my', strtotime($entry['expiry_date'])) : '';
+                $newBarcode = $item->code . '-' . $newBatchNo . $expiryPart;
+
+                $newBatch = $item->batches()->create([
+                    'batch_no' => $newBatchNo,
+                    'barcode' => $newBarcode,
+                    'cost_price' => $this->stockCostPrice,
+                    'selling_price' => $this->stockSellingPrice,
+                    'discount' => $this->stockDiscount,
+                    'quantity' => $entry['quantity'],
+                    'expiry_date' => $entry['expiry_date'],
+                    'is_active' => true
+                ]);
+            }
         }
 
         session()->flash('success', 'Stock added successfully.');
@@ -298,9 +431,8 @@ class ItemManagement extends Component
             $this->itemName = $item->name;
             $this->itemCategoryId = $item->sub_category_id ? 'sub_'.$item->sub_category_id : ($item->category_id ? 'cat_'.$item->category_id : '');
             $this->itemBaseUnit = $item->base_unit;
-            $this->itemHasBulkUnit = $item->has_bulk_unit;
-            $this->itemBulkUnit = $item->bulk_unit;
-            $this->itemBulkConversionFactor = $item->bulk_conversion_factor;
+
+            $this->itemHasExpiryDate = $item->has_expiry_date;
             $this->itemHasWarranty = $item->has_warranty;
             $this->itemWarrantyMonths = $item->warranty_months;
             $this->itemSearchAliases = $item->search_aliases;
@@ -316,8 +448,6 @@ class ItemManagement extends Component
         $this->validate([
             'itemName' => 'required|string|max:255',
             'itemBaseUnit' => 'required|string',
-            'itemBulkUnit' => $this->itemHasBulkUnit ? 'required|string' : 'nullable',
-            'itemBulkConversionFactor' => $this->itemHasBulkUnit ? 'required|numeric|min:0.01' : 'nullable',
             'itemSearchAliases' => 'nullable|string|max:255',
             'itemRackNumber' => 'nullable|string|max:50',
             'itemRackRow' => 'nullable|string|max:50',
@@ -346,9 +476,7 @@ class ItemManagement extends Component
                 'name' => $this->itemName,
                 'image' => $imagePath,
                 'base_unit' => $this->itemBaseUnit,
-                'has_bulk_unit' => $this->itemHasBulkUnit,
-                'bulk_unit' => $this->itemHasBulkUnit ? $this->itemBulkUnit : null,
-                'bulk_conversion_factor' => $this->itemHasBulkUnit ? ($this->itemBulkConversionFactor ?: 1) : 1,
+                'has_expiry_date' => $this->itemHasExpiryDate,
                 'has_warranty' => $this->itemHasWarranty,
                 'warranty_months' => $this->itemHasWarranty ? $this->itemWarrantyMonths : 0,
                 'category_id' => $catId,
@@ -394,6 +522,194 @@ class ItemManagement extends Component
             // So we shouldn't delete the item or batch. We should just mark it inactive.
         }
         $this->loadData();
+    }
+
+    public function openConvertToLooseModal($itemId)
+    {
+        $item = \App\Models\Item::find($itemId);
+        if ($item) {
+            $this->convertParentItemId = $item->id;
+            $this->convertParentItemName = $item->name;
+            $this->showConvertToLooseModal = true;
+        }
+    }
+
+    public function convertToLoose()
+    {
+        $this->validate([
+            'convertConversionFactor' => 'required|numeric|min:1',
+            'convertLoosePrice' => 'required|numeric|min:0',
+            'convertQuantityToOpen' => 'required|numeric|min:1',
+        ]);
+
+        $parentItem = \App\Models\Item::find($this->convertParentItemId);
+        if (!$parentItem) return;
+
+        // Check stock
+        $parentStock = $parentItem->getTotalStock();
+        if ($parentStock < $this->convertQuantityToOpen) {
+            $this->addError('convertQuantityToOpen', 'Insufficient stock to open.');
+            return;
+        }
+
+        // Deduct from parent (simplistic approach: deduct from oldest active batch)
+        $qtyToDeduct = $this->convertQuantityToOpen;
+        $batches = $parentItem->batches()->where('is_active', true)->where('quantity', '>', 0)->orderBy('created_at')->get();
+        $totalCostOfLoose = 0;
+        foreach ($batches as $batch) {
+            if ($qtyToDeduct <= 0) break;
+            $deduct = min($batch->quantity, $qtyToDeduct);
+            $batch->quantity -= $deduct;
+            $batch->save();
+            $qtyToDeduct -= $deduct;
+            $totalCostOfLoose += ($deduct * $batch->cost_price);
+        }
+
+        // Find or create Loose Item
+        $looseItem = \App\Models\Item::where('parent_item_id', $parentItem->id)->where('is_loose', true)->first();
+        if (!$looseItem) {
+            $lastItem = \App\Models\Item::orderBy('id', 'desc')->first();
+            $nextId = $lastItem ? $lastItem->id + 1 : 1;
+            $baseCode = 'ITEM' . str_pad($nextId, 3, '0', STR_PAD_LEFT);
+
+            $looseItem = \App\Models\Item::create([
+                'code' => $baseCode,
+                'name' => $parentItem->name . ' - Loose',
+                'image' => $parentItem->image,
+                'base_unit' => 'Pcs', // Default loose unit
+                'has_expiry_date' => $parentItem->has_expiry_date,
+                'has_warranty' => $parentItem->has_warranty,
+                'warranty_months' => $parentItem->warranty_months,
+                'category_id' => $parentItem->category_id,
+                'sub_category_id' => $parentItem->sub_category_id,
+                'is_loose' => true,
+                'parent_item_id' => $parentItem->id,
+            ]);
+        }
+
+        // Add stock to loose item
+        $looseQty = $this->convertQuantityToOpen * $this->convertConversionFactor;
+        $looseCostPrice = $totalCostOfLoose / $looseQty;
+
+        $batchCount = $looseItem->batches()->count();
+        $newBatchNo = 'B' . str_pad($batchCount + 1, 2, '0', STR_PAD_LEFT);
+        $newBarcode = $looseItem->code . '-' . $newBatchNo;
+
+        $looseItem->batches()->create([
+            'batch_no' => $newBatchNo,
+            'barcode' => $newBarcode,
+            'cost_price' => $looseCostPrice,
+            'selling_price' => $this->convertLoosePrice,
+            'discount' => 0,
+            'quantity' => $looseQty,
+            'is_active' => true
+        ]);
+
+        session()->flash('success', 'Successfully converted to loose items.');
+        $this->loadData();
+        $this->closeModals();
+    }
+
+    // Printing Logic
+    public function openPrintModal($batchId)
+    {
+        $this->printBatchId = $batchId;
+        $this->printCopies = \App\Models\ItemBatch::find($batchId)->quantity ?? 1;
+        $this->showPrintModal = true;
+    }
+
+    public function printSingleBatch()
+    {
+        $this->validate(['printCopies' => 'required|numeric|min:1']);
+        
+        $batch = \App\Models\ItemBatch::with(['item'])->find($this->printBatchId);
+        if ($batch) {
+            $printData = [
+                [
+                    'name' => $batch->item->name,
+                    'price' => $batch->selling_price,
+                    'barcode' => $batch->barcode,
+                    'copies' => $this->printCopies
+                ]
+            ];
+            
+            // Mark as printed
+            $batch->update(['is_printed' => true]);
+            
+            $this->dispatch('print-barcodes', data: $printData);
+            $this->closeModals();
+        }
+    }
+
+    public function openItemPrintModal($itemId)
+    {
+        $batches = \App\Models\ItemBatch::with(['item'])
+            ->where('item_id', $itemId)
+            ->where('is_active', true)
+            ->get();
+            
+        $pending = [];
+        foreach ($batches as $b) {
+            $pending[] = [
+                'id' => $b->id,
+                'name' => $b->item->name,
+                'barcode' => $b->barcode,
+                'price' => $b->selling_price,
+                'copies' => $b->quantity > 0 ? (int)$b->quantity : 1,
+                'selected' => true
+            ];
+        }
+        $this->pendingBatchesToPrint = $pending;
+        
+        $this->showBulkPrintModal = true;
+    }
+
+    public function openBulkPrintModal()
+    {
+        $batches = \App\Models\ItemBatch::with(['item'])
+            ->where('is_printed', false)
+            ->where('is_active', true)
+            ->get();
+            
+        $pending = [];
+        foreach ($batches as $b) {
+            $pending[] = [
+                'id' => $b->id,
+                'name' => $b->item->name,
+                'barcode' => $b->barcode,
+                'price' => $b->selling_price,
+                'copies' => $b->quantity > 0 ? (int)$b->quantity : 1,
+                'selected' => true
+            ];
+        }
+        $this->pendingBatchesToPrint = $pending;
+        
+        $this->showBulkPrintModal = true;
+    }
+
+    public function printBulkBatches()
+    {
+        $printData = [];
+        $idsToUpdate = [];
+        
+        foreach ($this->pendingBatchesToPrint as $item) {
+            if (isset($item['selected']) && $item['selected']) {
+                $printData[] = [
+                    'name' => $item['name'],
+                    'price' => $item['price'],
+                    'barcode' => $item['barcode'],
+                    'copies' => (int)$item['copies']
+                ];
+                $idsToUpdate[] = $item['id'];
+            }
+        }
+        
+        if (count($printData) > 0) {
+            \App\Models\ItemBatch::whereIn('id', $idsToUpdate)->update(['is_printed' => true]);
+            $this->dispatch('print-barcodes', data: $printData);
+        }
+        
+        $this->closeModals();
     }
 
     public function render()

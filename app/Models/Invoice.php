@@ -30,4 +30,9 @@ class Invoice extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function cashRegister()
+    {
+        return $this->belongsTo(CashRegister::class);
+    }
 }

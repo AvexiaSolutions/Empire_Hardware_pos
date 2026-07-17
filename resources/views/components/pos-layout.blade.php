@@ -137,6 +137,17 @@
                 </li>
                 @endif
                 
+                @if(auth()->check() && auth()->user()->role === 'admin')
+                <li class="nav-item">
+                    <a href="{{ route('ai.assistant') }}" wire:navigate class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('ai.assistant') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
+                        <div style="min-width: 32px; display: flex; justify-content: center;">
+                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        </div>
+                        <span class="nav-text">{{ __('AI Assistant') }}</span>
+                    </a>
+                </li>
+                @endif
+                
                 @if(auth()->check() && auth()->user()->hasPermission('pos.access'))
                 <li class="nav-item">
                     <a href="{{ route('pos.index') }}" wire:navigate class="nav-link fs-6 fw-semibold d-flex align-items-center p-2 rounded {{ request()->routeIs('pos.*') ? 'bg-primary-custom text-white' : 'text-body hover-bg-body-tertiary' }}">
@@ -291,6 +302,7 @@
                                 elseif (str_contains($routeName, 'employer')) $pageName = __('Employer');
                                 elseif (str_contains($routeName, 'credit-cheque')) $pageName = __('Credit & Cheque');
                                 elseif (str_contains($routeName, 'settings')) $pageName = __('Settings');
+                                elseif (str_contains($routeName, 'ai.assistant')) $pageName = __('AI Assistant');
                             @endphp
                             {{ $pageName }}
                         </p>

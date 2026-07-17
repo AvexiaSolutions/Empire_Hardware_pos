@@ -66,21 +66,23 @@
                 <div class="row g-3">
                     @foreach($searchResults as $item)
                         <div class="col-6 col-md-4 col-xl-3">
-                            <div wire:click="addToCart({{ $item->id }})" class="card border-0 shadow-sm h-100 cursor-pointer text-body hover-lift" style="cursor: pointer;">
+                            <div wire:click="selectItem({{ $item->id }})" class="card border-0 shadow-sm h-100 cursor-pointer text-body hover-lift" style="cursor: pointer;">
                                 <div class="card-body p-3 d-flex flex-column">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="mb-2">
                                         <span class="badge bg-secondary-subtle text-secondary">{{ $item->code }}</span>
-                                        <span class="badge {{ $item->getTotalStock() > 0 ? 'bg-success' : 'bg-danger' }} rounded-pill" style="font-size: 0.7rem;">Stock: {{ $item->getTotalStock() }}</span>
                                     </div>
-                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                    <div class="d-flex align-items-start gap-2 mb-2">
                                         @if($item->image)
-                                            <img src="{{ asset('storage/' . $item->image) }}" class="rounded shadow-sm" style="width: 40px; height: 40px; object-fit: cover;">
+                                            <img src="{{ asset('storage/' . $item->image) }}" class="rounded shadow-sm flex-shrink-0" style="width: 40px; height: 40px; object-fit: cover;">
                                         @else
-                                            <div class="bg-body-secondary rounded d-flex align-items-center justify-content-center text-muted shadow-sm" style="width: 40px; height: 40px;">
+                                            <div class="bg-body-secondary rounded d-flex align-items-center justify-content-center text-muted shadow-sm flex-shrink-0" style="width: 40px; height: 40px;">
                                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                             </div>
                                         @endif
-                                        <h5 class="card-title fs-6 fw-bold mb-0 lh-sm">{{ $item->name }}</h5>
+                                        <div class="d-flex flex-column align-items-start">
+                                            <h5 class="card-title fs-6 fw-bold mb-1 lh-sm">{{ $item->name }}</h5>
+                                            <span class="badge {{ $item->getTotalStock() > 0 ? 'bg-success' : 'bg-danger' }} rounded-pill" style="font-size: 0.7rem;">Stock: {{ $item->getTotalStock() }}</span>
+                                        </div>
                                     </div>
                                     @if($item->rack_number || $item->rack_row)
                                         <div class="small text-muted mb-2 d-flex flex-column gap-0" style="font-size: 0.75rem;">
@@ -130,7 +132,10 @@
             <!-- Header (Desktop) -->
             <div class="d-none d-lg-flex justify-content-between align-items-center mb-3">
                 <h3 class="fs-4 fw-bold text-body mb-0">{{ __('Current Order') }}</h3>
-                <button wire:click="clearCart" class="btn btn-sm btn-outline-danger shadow-sm hover-lift" title="Shortcut: F4">{{ __('Clear Cart [F4]') }}</button>
+                <div>
+                    <button wire:click="openCloseRegisterModal" class="btn btn-sm btn-outline-warning shadow-sm hover-lift me-2" title="End Shift">{{ __('End Shift') }}</button>
+                    <button wire:click="clearCart" class="btn btn-sm btn-outline-danger shadow-sm hover-lift" title="Shortcut: F4">{{ __('Clear Cart [F4]') }}</button>
+                </div>
             </div>
             
             <!-- Mobile clear cart button -->
@@ -306,6 +311,73 @@
     </div>
 </div>
 
+<!-- Batch Selection Modal -->
+<div class="modal fade {{ $showBatchSelectionModal ? 'show d-block' : '' }}" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-bottom-0 pb-0 pt-4 px-4">
+                <h5 class="modal-title fw-bold fs-4">
+                    {{ __('Select Batch for') }} <span class="text-primary">{{ $selectedItemForBatches ? $selectedItemForBatches->name : '' }}</span>
+                </h5>
+                <button type="button" class="btn-close" wire:click="$set('showBatchSelectionModal', false)"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>{{ __('Batch ID') }} / {{ __('Barcode') }}</th>
+                                <th>{{ __('Stock') }}</th>
+                                <th>{{ __('Expiry') }}</th>
+                                <th>{{ __('Price') }}</th>
+                                <th class="text-end">{{ __('Action') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if($selectedItemForBatches)
+                                @foreach($selectedItemForBatches->batches as $batch)
+                                    @if($batch->is_active && $batch->quantity > 0)
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">{{ $batch->batch_no ?: '-' }} <span class="badge bg-secondary ms-1">Loose</span></div>
+                                            <small class="text-muted">{{ $batch->barcode }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success rounded-pill">{{ $batch->quantity }}</span>
+                                        </td>
+                                        <td>
+                                            @if($batch->expiry_date)
+                                                <span class="badge {{ \Carbon\Carbon::parse($batch->expiry_date)->isPast() ? 'bg-danger' : (\Carbon\Carbon::parse($batch->expiry_date)->diffInDays(now()) < 30 ? 'bg-warning text-dark' : 'bg-info') }}">
+                                                    {{ \Carbon\Carbon::parse($batch->expiry_date)->format('Y-m-d') }}
+                                                </span>
+                                            @else
+                                                <span class="text-muted small">{{ __('No Expiry') }}</span>
+                                            @endif
+                                        </td>
+                                        <td class="fw-bold">Rs. {{ number_format($batch->selling_price, 2) }}</td>
+                                        <td class="text-end">
+                                            <button class="btn btn-primary btn-sm px-3 fw-bold" wire:click="addToCart({{ $selectedItemForBatches->id }}, {{ $batch->id }})">
+                                                {{ __('Select') }}
+                                            </button>
+                                        </td>
+                                    </tr>
+
+
+
+                                    @endif
+                                @endforeach
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pb-4 px-4">
+                <button type="button" class="btn btn-light bg-body fw-bold px-4" wire:click="$set('showBatchSelectionModal', false)">{{ __('Cancel') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('keydown', function(e) {
         // F1: Pay Now
@@ -404,4 +476,59 @@
     }
 
 </script>
+
+    <!-- Cash Register Modals -->
+    @if($showOpenRegisterModal)
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 9999;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">Open Register (Start Shift)</h5>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted">Please enter the opening cash balance in the drawer to start your shift.</p>
+                    <div class="form-group mb-3">
+                        <label class="fw-bold mb-2">Opening Balance (Rs.)</label>
+                        <input type="number" step="0.01" wire:model="registerOpeningBalance" class="form-control form-control-lg text-center fw-bold">
+                        @error('registerOpeningBalance') <span class="text-danger small">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button wire:click="openRegister" class="btn btn-primary w-100 btn-lg fw-bold">Open Register</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    @if($showCloseRegisterModal)
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 9999;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title fw-bold text-dark">Close Register (End Shift)</h5>
+                    <button type="button" class="btn-close" wire:click="$set('showCloseRegisterModal', false)"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-4 p-3 bg-light rounded text-center border">
+                        <small class="text-muted d-block fw-bold text-uppercase tracking-wider">Expected Cash in Drawer</small>
+                        <strong class="fs-1 text-primary">Rs. {{ number_format($activeRegister->expected_closing_balance ?? 0, 2) }}</strong>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="fw-bold mb-2">Actual Closing Balance (Rs.)</label>
+                        <input type="number" step="0.01" wire:model="registerClosingBalance" class="form-control form-control-lg text-center fw-bold">
+                        @error('registerClosingBalance') <span class="text-danger small">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="fw-bold mb-2">Notes (Optional)</label>
+                        <textarea wire:model="registerNotes" class="form-control" rows="2" placeholder="e.g. Cash discrepancy reason..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button wire:click="closeRegister" class="btn btn-danger w-100 btn-lg fw-bold">Confirm & Close Register</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>

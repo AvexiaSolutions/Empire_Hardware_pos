@@ -289,8 +289,9 @@
                     </div>
                 </div>
             </div>
-        </div>
     </div>
+    <!-- AI Assistant Floating Widget -->
+    <livewire:dashboard.ai-assistant />
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
