@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v1.3.0] - 2026-07-17
+## [v1.3] - 2026-07-17
 
 ### Added
 - **AI Assistant Integration**: Added a floating AI Assistant widget to the dashboard powered by the Google Gemini API (`gemini-3.5-flash`), capable of analyzing sales, stock, and generating business insights.

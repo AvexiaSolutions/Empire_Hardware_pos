@@ -1,8 +1,8 @@
-# Empire POS System (v1.3.0)
+# Empire POS System (v1.3)
 
 A modern, fast, and feature-rich Point of Sale (POS) system built with Laravel, Livewire, and Alpine.js.
 
-## Features Included in v1.3.0
+## Features Included in v1.3
 - **AI Assistant**: A powerful, floating AI Assistant powered by Google Gemini (gemini-3.5-flash) capable of analyzing real-time sales and stock data.
 - **Real-time Customer Display**: Secondary screen syncing live with the cashier's cart via WebSockets.
 - **Advanced Inventory**: Smart handling of bulk/loose items (e.g. converting a Box into Pieces).
