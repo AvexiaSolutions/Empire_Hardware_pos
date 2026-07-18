@@ -25,3 +25,8 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+/php/
+/mysql/
+/phpMyAdmin/
+Empire_POS_Setup.exe
